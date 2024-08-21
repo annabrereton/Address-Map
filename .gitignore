@@ -25,3 +25,4 @@ yarn-error.log
 .DS_Store
 /bootstrap/cache/
 /storage/logs/
+/database/backups/*.sql

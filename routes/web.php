@@ -8,3 +8,4 @@ use Illuminate\Support\Facades\Route;
 //});
 
 Route::get('/', [AddressController::class, 'index']);
+Route::post('/add-address', [AddressController::class, 'store'])->name('address.store');
