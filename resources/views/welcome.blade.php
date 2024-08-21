@@ -18,6 +18,8 @@
 
 <body>
 
+@include('edit_address')
+
     <div id="container"></div>
 
     <script>

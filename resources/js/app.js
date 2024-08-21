@@ -64,7 +64,10 @@ document.addEventListener('DOMContentLoaded', function() {
     house.castShadow = true;
     house.receiveShadow = true;
     house.userData.type = house;
+    house.userData.id = address.id;
     house.userData.address = address.house + ' ' + address.street;
+    house.userData.house = address.house;
+    house.userData.street = address.street;
     house.userData.lat = address.lat;
     house.userData.lon = address.lon;
     house.position.set(mapCoords.x, mapCoords.y, mapHeight / 2 + 5);       // Adjust Z position to sit on top of the cylinder
@@ -77,13 +80,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const mouse = new THREE.Vector2();
 
     // ADD DOM ELEMENT TO DISPLAY ADDRESS
-    const addressCard = document.createElement('div');
+    const addressCard = document.createElement('addressCard');
     addressCard.style.position = 'absolute';
     addressCard.style.backgroundColor = 'white';
     addressCard.style.padding = '10px';
     addressCard.style.border = '1px solid black';
     addressCard.style.borderRadius = '5px';
-    addressCard.style.fontFamily = 'Arial, sans-serif'; // Set font to sans-serif
+    addressCard.style.fontFamily = 'Arial, sans-serif';
     addressCard.style.display = 'none'; // Start hidden
     document.body.appendChild(addressCard);
 
@@ -113,10 +116,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p><strong>Address:</strong> ${object.userData.address}</p>
                     <p><strong>Lat:</strong> ${object.userData.lat}</p>
                     <p><strong>Lon:</strong> ${object.userData.lon}</p>
+                    <div class="d-flex justify-content-end gap-2">
+<!--                      <button id="editAddress" class="btn btn-sm btn-primary">Edit</button>-->
+                      <a href="" id="editAddress" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editAddressModal">Edit
+                      </a>
+                      <form id="deleteForm" action="/delete-address/${object.userData.id}" method="POST">
+                          <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
+                          <input type="hidden" name="_method" value="DELETE">
+                          <button type="submit" id="removeHouse" class="btn btn-sm btn-danger">Delete</button>
+                      </form>
+                    </div>
                 `;
                 addressCard.style.left = `${event.clientX}px`;
                 addressCard.style.top = `${event.clientY}px`;
                 addressCard.style.display = 'block';
+
+                // Attach event listener for the Edit button directly after creating it
+                document.getElementById('editAddress').addEventListener('click', function(event) {
+                    // Prevent default anchor click behavior
+                    event.preventDefault();
+
+                    // Populate modal fields
+                    document.getElementById('editHouseName').value = object.userData.house;
+                    document.getElementById('editStreet').value = object.userData.street;
+                    document.getElementById('editLatitude').value = object.userData.lat;
+                    document.getElementById('editLongitude').value = object.userData.lon;
+
+                    // Set the form action URL for updating the address
+                    document.getElementById('editAddressForm').action = `/update-address/${object.userData.id}`;
+                });
             } else {
                 addressCard.style.display = 'none';
             }
