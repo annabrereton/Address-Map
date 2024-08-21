@@ -14,5 +14,9 @@
 
 <div id="container"></div>
 
+<script>
+    window.addresses = @json($addresses);
+</script>
+
 </body>
 </html>
