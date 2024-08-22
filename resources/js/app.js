@@ -80,15 +80,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const mouse = new THREE.Vector2();
 
     // ADD DOM ELEMENT TO DISPLAY ADDRESS
-    const addressCard = document.createElement('addressCard');
-    addressCard.style.position = 'absolute';
-    addressCard.style.backgroundColor = 'white';
-    addressCard.style.padding = '10px';
-    addressCard.style.border = '1px solid black';
-    addressCard.style.borderRadius = '5px';
-    addressCard.style.fontFamily = 'Arial, sans-serif';
-    addressCard.style.display = 'none'; // Start hidden
-    document.body.appendChild(addressCard);
+    const cardContainer = document.createElement('div');
+    cardContainer.id = 'addressCardContainer';
+    cardContainer.style.position = 'absolute';
+    cardContainer.style.top = '0px';
+    cardContainer.style.left = '0px';
+    cardContainer.style.width = '100vw';
+    cardContainer.style.height = '100vh';
+    document.body.appendChild(cardContainer);
+    console.log("Card Container:", cardContainer);
 
     // UPDATE MOUSE VARIABLE ON MOUSE MOVE
     window.addEventListener('mousemove', (event) => {
@@ -105,56 +105,75 @@ document.addEventListener('DOMContentLoaded', function() {
         const intersects = raycaster.intersectObjects(allHouses);
 
         console.log("Number of intersects:", intersects.length);
-        console.log(intersects);
+        console.log("Intersects: ", intersects);
+
+        // Clear existing address cards
+        cardContainer.innerHTML = '';
 
         if (intersects.length > 0) {
-            const object = intersects[0].object; // Take the first object only [0]
+            cardContainer.style.display = 'block'; // Ensure container is shown
 
-            // Display the address in the address card
-            if (object.userData && object.userData.address) {
-                addressCard.innerHTML = `
+            intersects.forEach((intersection, index) => {
+                const object = intersection.object;
+
+                // Log object data
+                console.log("Intersected Object Data:", object.userData);
+
+
+                // Only create a card if the object is of type 'house'
+                if (object.userData && object.userData.address) {
+                    console.log(object.userData.address);
+                    console.log(cardContainer);
+
+                    const card = document.createElement('div');
+                    card.className = 'address-card';
+                    card.style.position = 'absolute';
+                    card.style.width = `10rem`;
+                    card.style.left = `${event.clientX + (index * 180)}px`;
+                    card.style.top = `${event.clientY}px`; // Offset each card to avoid overlap
+                    card.style.border = '1px solid #ccc';
+                    card.style.borderRadius = '5px';
+                    card.style.padding = '10px';
+                    card.style.backgroundColor = '#fff';
+                    card.style.fontFamily = 'Arial, sans-serif';
+                    card.style.display = 'block';
+
+                    card.innerHTML = `
                     <p><strong>Address:</strong> ${object.userData.address}</p>
                     <p><strong>Lat:</strong> ${object.userData.lat}</p>
                     <p><strong>Lon:</strong> ${object.userData.lon}</p>
                     <div class="d-flex justify-content-end gap-2">
-<!--                      <button id="editAddress" class="btn btn-sm btn-primary">Edit</button>-->
-                      <a href="" id="editAddress" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#editAddressModal">Edit
-                      </a>
-                      <form id="deleteForm" action="/delete-address/${object.userData.id}" method="POST">
+                      <a href="#" id="editAddress${object.userData.id}" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editAddressModal">Edit</a>
+                      <form id="deleteForm${object.userData.id}" action="/delete-address/${object.userData.id}" method="POST">
                           <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
                           <input type="hidden" name="_method" value="DELETE">
-                          <button type="submit" id="removeHouse" class="btn btn-sm btn-danger">Delete</button>
+                          <button type="submit" id="removeHouse${object.userData.id}" class="btn btn-sm btn-danger">Delete</button>
                       </form>
                     </div>
                 `;
-                addressCard.style.left = `${event.clientX}px`;
-                addressCard.style.top = `${event.clientY}px`;
-                addressCard.style.display = 'block';
 
-                // Attach event listener for the Edit button directly after creating it
-                document.getElementById('editAddress').addEventListener('click', function(event) {
-                    // Prevent default anchor click behavior
-                    event.preventDefault();
+                    // Append the new card to the container
+                    cardContainer.appendChild(card);
 
-                    // Populate modal fields
-                    document.getElementById('editHouseName').value = object.userData.house;
-                    document.getElementById('editStreet').value = object.userData.street;
-                    document.getElementById('editLatitude').value = object.userData.lat;
-                    document.getElementById('editLongitude').value = object.userData.lon;
-
-                    // Set the form action URL for updating the address
-                    document.getElementById('editAddressForm').action = `/update-address/${object.userData.id}`;
-                });
-            } else {
-                addressCard.style.display = 'none';
-            }
+                    // Attach event listeners for the Edit buttons
+                    document.getElementById(`editAddress${object.userData.id}`).addEventListener('click', function (event) {
+                        event.preventDefault();
+                        // Populate modal fields
+                        document.getElementById('editHouseName').value = object.userData.house;
+                        document.getElementById('editStreet').value = object.userData.street;
+                        document.getElementById('editLatitude').value = object.userData.lat;
+                        document.getElementById('editLongitude').value = object.userData.lon;
+                        document.getElementById('editAddressForm').action = `/update-address/${object.userData.id}`;
+                    });
+                }
+            });
         } else {
-            // Hide the address card if no object was clicked
-            addressCard.style.display = 'none';
+            // Hide the card container if no object was clicked
+            cardContainer.style.display = 'none';
         }
-
     });
+
 
     // Ambient light (soft, scattered light)
     const ambientLight = new THREE.AmbientLight(0x404040, 1.5);         // Soft white light, slightly stronger

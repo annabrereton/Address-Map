@@ -6,14 +6,14 @@ canvas {
     display: block;
 }
 
-/*#addressCard {*/
+/*.address-card {*/
 /*    position: absolute;*/
-/*    background: white;*/
+/*    background-color: #fff;*/
+/*    border: 1px solid #ccc;*/
 /*    padding: 10px;*/
-/*    border: 1px solid black;*/
-/*    border-radius: 5px;*/
-/*    font-family: Arial, sans-serif;*/
-/*    display: none;*/
+/*    box-shadow: 0px 4px 8px rgba(0,0,0,0.2);*/
+/*    display: block; !* Ensure cards are visible *!*/
+/*    !*z-index: -1; !* Ensure the card is on top of other elements *!*!*/
 /*}*/
 
 #updateContainer {
