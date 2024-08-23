@@ -12,23 +12,23 @@
                     @method('PUT')
 
                     <div class="mb-3">
-                        <label for="editHouseName" class="form-label">Name/Number</label>
-                        <input type="text" class="form-control" id="editHouseName" name="house" required>
+                        <label for="editAddressName" class="form-label">Name/Number</label>
+                        <input type="text" class="form-control" id="editAddressName" name="house" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="editStreet" class="form-label">Street</label>
-                        <input type="text" class="form-control" id="editStreet" name="street" required>
+                        <label for="editAddressStreet" class="form-label">Street</label>
+                        <input type="text" class="form-control" id="editAddressStreet" name="street" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="editLatitude" class="form-label">Latitude</label>
-                        <input type="text" class="form-control" id="editLatitude" name="latitude" required>
+                        <label for="editAddressLatitude" class="form-label">Latitude</label>
+                        <input type="text" class="form-control" id="editAddressLatitude" name="latitude" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="editLongitude" class="form-label">Longitude</label>
-                        <input type="text" class="form-control" id="editLongitude" name="longitude" required>
+                        <label for="editAddressLongitude" class="form-label">Longitude</label>
+                        <input type="text" class="form-control" id="editAddressLongitude" name="longitude" required>
                     </div>
 
                     <button type="submit" class="btn btn-primary">Save changes</button>

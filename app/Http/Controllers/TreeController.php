@@ -13,7 +13,7 @@ class TreeController extends Controller
         $validated = $request->validate([
             'lat' => 'required|numeric',
             'lon' => 'required|numeric',
-            'scale' => 'required|integer',
+            'scale' => 'required|integer|between:1,8',
             'leaf_colour' => 'nullable|string',
             'trunk_colour' => 'nullable|string',
         ]);
@@ -25,5 +25,36 @@ class TreeController extends Controller
         ]);
 
         return back()->with('success', 'Tree added successfully.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'scale' => 'required|integer|between:1,8',
+            'leaf_colour' => 'nullable|string',
+            'trunk_colour' => 'nullable|string',
+        ]);
+
+        // Update the tree in the database
+        $tree = Tree::findOrFail($id);
+        $tree->lat = $request->input('latitude');
+        $tree->lon = $request->input('longitude');
+        $tree->scale = $request->input('scale');
+        $tree->leaf_colour = $request->input('leaf_colour');
+        $tree->trunk_colour = $request->input('trunk_colour');
+
+        $tree->save();
+
+        return redirect()->back()->with('success', 'Tree updated successfully.');
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $tree = Tree::findOrFail($id);
+        $tree->delete();
+
+        return redirect()->back()->with('success', 'Tree deleted successfully.');
     }
 }

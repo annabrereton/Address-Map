@@ -20,6 +20,7 @@ const latTopRight = 1;
 const lonTopRight = 1;
 const dummy = new THREE.Object3D();
 const raycaster = new THREE.Raycaster();
+const treeInstanceData = []; // Initialize treeInstanceData as an empty array or object to store the tree data associated with each instance
 const mouse = new THREE.Vector2();
 const cardContainer = document.createElement('div');
 let contextMenu;
@@ -107,11 +108,14 @@ function latLonToMapCoords(lat, lon) {
 // Function to convert integer scale to decimal scale
 function integerToScale(integer) {
     const mapping = {
-        1: 0.3,
-        2: 0.6,
-        3: 0.9,
-        4: 1.2,
-        5: 1.5
+        1: 0.2,
+        2: 0.4,
+        3: 0.5,
+        4: 0.6,
+        5: 0.7,
+        6: 0.8,
+        7: 0.9,
+        8: 1.0
     };
 
     return mapping[integer] || 0.9; // Default scale if not found
@@ -121,7 +125,7 @@ function integerToScale(integer) {
 function loadTreeModel() {
     const treeLoader = new GLTFLoader();
     treeLoader.load('/assets/tree.glb', function (gltf) {
-        // console.log('Loaded GLTF file:', gltf.scene);
+        console.log('Loaded GLTF file:', gltf.scene);
 
         const trunkMeshGLTF = gltf.scene.getObjectByName('treetrunk');
         const leavesMeshGLTF = gltf.scene.getObjectByName('treeleaves');
@@ -141,8 +145,15 @@ function loadTreeModel() {
         trunkGeometry.applyMatrix4(defaultTransform);
         leavesGeometry.applyMatrix4(defaultTransform);
 
-        const trunkMaterial = trunkMeshGLTF.material;
-        const leavesMaterial = leavesMeshGLTF.material;
+        const trunkMaterial = trunkMeshGLTF.material.clone();  // Clone to allow modifications
+        const leavesMaterial = leavesMeshGLTF.material.clone();  // Clone to allow modifications
+
+        // Ensure the material settings allow the color to show as intended
+        leavesMaterial.transparent = false;  // Disable transparency
+        leavesMaterial.color = new THREE.Color(0xffffff);  // Set base color to white
+        if (leavesMaterial.map) {
+            leavesMaterial.map = null;  // Remove any texture map
+        }
 
         trunkMesh = new THREE.InstancedMesh(trunkGeometry, trunkMaterial, trees.length);
         leavesMesh = new THREE.InstancedMesh(leavesGeometry, leavesMaterial, trees.length);
@@ -157,7 +168,7 @@ function loadTreeModel() {
         trunkMesh.instanceMatrix.needsUpdate = true;
         leavesMesh.instanceMatrix.needsUpdate = true;
 
-
+        // Iterate through the trees variable to position according to db values
         trees.forEach((tree, index) => {
             // Convert the tree's latitude and longitude to map coordinates
             const treeCoords = latLonToMapCoords(tree.lat, tree.lon);
@@ -166,25 +177,32 @@ function loadTreeModel() {
             // Convert integer scale to decimal
             const scale = integerToScale(tree.scale);
 
-            // Set the position of the dummy object based on the map coordinates
-            dummy.position.set(treeCoords.x, treeCoords.y, 10);  // Adjust z (height) as needed
-
-            // Rotate the dummy to make the tree stand upright
+            dummy.position.set(treeCoords.x, treeCoords.y, 10); // Set the x, y position of the dummy object based on the map coordinates
             dummy.rotation.set(-Math.PI / 2, 0, 0);  // Rotate -90 degrees around the X-axis
+            dummy.scale.set(scale, scale, scale); // Set the dummy's scale
+            dummy.updateMatrix(); // Update the dummy's matrix and apply it to the instance
 
-            // Set the dummy's scale
-            dummy.scale.set(scale, scale, scale);
-
-            // Update the dummy's matrix and apply it to the instance
-            dummy.updateMatrix();
             trunkMesh.setMatrixAt(index, dummy.matrix);
             leavesMesh.setMatrixAt(index, dummy.matrix);
+
+            // Set colors from database
+            const trunkColor = new THREE.Color(tree.trunk_colour || '#8B4513');  // Default to a brown color if not set
+            const leavesColor = new THREE.Color(tree.leaf_colour || '#00FF00');  // Default to green if not set
+
+            trunkMesh.setColorAt(index, trunkColor);
+            leavesMesh.setColorAt(index, leavesColor);
+
+            // Store the tree ID and other relevant data
+            treeInstanceData[index] = { id: tree.id, data: tree };
         });
 
         // Ensure the instanced meshes are updated
         trunkMesh.instanceMatrix.needsUpdate = true;
         leavesMesh.instanceMatrix.needsUpdate = true;
+        trunkMesh.instanceColor.needsUpdate = true;
+        leavesMesh.instanceColor.needsUpdate = true;
 
+        console.log("Tree Instance Data: ", treeInstanceData);
 
     }, undefined, function (error) {
         console.error('An error occurred while loading the GLTF model:', error);
@@ -247,13 +265,20 @@ function onMouseClick(event) {
         removeContextMenu();
     }
 
-    if (event.button !== 0) return; // Ignore if it's not a left-click
+    // Ignore if it's not a left-click
+    if (event.button !== 0) return;
+
+    // Check if the click is on a delete button
+    if (event.target.closest('button') && event.target.closest('button').classList.contains('btn-danger')) {
+        // Don't clear the container or do anything if a delete button was clicked
+        return;
+    }
 
     // Update the raycaster based on the current mouse position
     raycaster.setFromCamera(mouse, camera);
 
     // Calculate objects intersecting the ray
-    const intersects = raycaster.intersectObjects([...allHouses, mapMesh]);
+    const intersects = raycaster.intersectObjects([...allHouses, mapMesh, trunkMesh, leavesMesh]); // Checks which objects in the scene the ray intersects. For each intersected object, it creates an Intersection object, saved in the intersects[] array.
 
     // console.log("Number of intersects:", intersects.length);
     // console.log("Intersects: ", intersects);
@@ -261,8 +286,11 @@ function onMouseClick(event) {
     // Clear existing address cards
     cardContainer.innerHTML = '';
 
-    // Variable to check if a house was clicked
-    let houseClicked = false;
+    // Variable to check if a house or tree was clicked
+    let clicked = false;
+
+    // Flag to keep track of processed tree instances
+    const processedTreeInstances = new Set();
 
     if (intersects.length > 0) {
         cardContainer.style.display = 'block';
@@ -273,19 +301,21 @@ function onMouseClick(event) {
             // Log object data
             // console.log("Intersected Object Data:", object.userData);
 
-            // Only create a card if the object is of type 'house'
-            if (object.userData && object.userData.address) {
-                houseClicked = true;  // Mark that a house was clicked
+            if (object === mapMesh) {
+                // Handle map interactions if needed
+                return;
+            }
 
-                // console.log(object.userData.address);
-                // console.log(cardContainer);
+            // Handle house interactions
+            if (object.userData && object.userData.address) {
+                clicked = true;
 
                 const card = document.createElement('div');
                 card.className = 'address-card';
                 card.style.position = 'absolute';
                 card.style.width = `10rem`;
                 card.style.left = `${event.clientX + (index * 180)}px`;
-                card.style.top = `${event.clientY}px`; // Offset each card to avoid overlap
+                card.style.top = `${event.clientY}px`;
                 card.style.border = '1px solid #ccc';
                 card.style.borderRadius = '5px';
                 card.style.padding = '10px';
@@ -300,27 +330,95 @@ function onMouseClick(event) {
                     <div class="d-flex justify-content-end gap-2">
                         <a href="#" id="editAddress${object.userData.id}" class="btn btn-sm btn-primary" data-bs-toggle="modal"
                            data-bs-target="#editAddressModal">Edit</a>
-                        <form id="deleteForm${object.userData.id}" action="/delete-address/${object.userData.id}" method="POST">
+                        <form id="deleteAddressForm${object.userData.id}" action="/address/${object.userData.id}" method="POST">
                             <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
                             <input type="hidden" name="_method" value="DELETE">
                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                         </form>
                     </div>
                 `;
-                // Append the new card to the container
                 cardContainer.appendChild(card);
 
-                // Attach event listeners for the Edit buttons
+                // Add form submission event listener
+                document.getElementById(`deleteAddressForm${object.userData.id}`).addEventListener('submit', function() {
+                    formIsBeingSubmitted = true; // Set flag when form is submitted
+                });
+
                 document.getElementById(`editAddress${object.userData.id}`).addEventListener('click', function (event) {
                     event.preventDefault();
-                    // Populate modal fields
-                    document.getElementById('editHouseName').value = object.userData.house;
-                    document.getElementById('editStreet').value = object.userData.street;
-                    document.getElementById('editLatitude').value = object.userData.lat;
-                    document.getElementById('editLongitude').value = object.userData.lon;
-                    document.getElementById('editAddressForm').action = `/update-address/${object.userData.id}`;
-                });            }
+                    document.getElementById('editAddressName').value = object.userData.house;
+                    document.getElementById('editAddressStreet').value = object.userData.street;
+                    document.getElementById('editAddressLatitude').value = object.userData.lat;
+                    document.getElementById('editAddressLongitude').value = object.userData.lon;
+                    document.getElementById('editAddressForm').action = `/address/${object.userData.id}`;
+                });
+            }
+
+            // Handle tree interactions
+            if (object === trunkMesh || object === leavesMesh) {
+                const instanceIndex = intersection.instanceId;
+
+                // Ensure that the instance is only processed once per click
+                if (!processedTreeInstances.has(instanceIndex)) {
+                    processedTreeInstances.add(instanceIndex);
+
+                    const treeData = treeInstanceData[instanceIndex];
+                    console.log("Tree instance: ", instanceIndex, "TreeData: ", treeData);
+
+                    // Here you can handle the treeData, e.g., show information or edit the tree
+                    clicked = true;
+
+                    const card = document.createElement('div');
+                    card.className = 'tree-card';
+                    card.style.position = 'absolute';
+                    card.style.width = `10rem`;
+                    card.style.left = `${event.clientX + (index * 180)}px`;
+                    card.style.top = `${event.clientY}px`;
+                    card.style.border = '1px solid #ccc';
+                    card.style.borderRadius = '5px';
+                    card.style.padding = '10px';
+                    card.style.backgroundColor = '#fff';
+                    card.style.fontFamily = 'Arial, sans-serif';
+                    card.style.display = 'block';
+
+                    card.innerHTML = `
+                        <p><strong>Tree ID:</strong> ${treeData.id}</p>
+                        <p><strong>Lat:</strong> ${treeData.data.lat}</p>
+                        <p><strong>Lon:</strong> ${treeData.data.lon}</p>
+                        <p><strong>Scale:</strong> ${treeData.data.scale}</p>
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="#" id="editTree${treeData.id}" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                               data-bs-target="#editTreeModal">Edit</a>
+                            <form id="deleteTreeForm${treeData.id}" action="/tree/${treeData.id}" method="POST">
+                                <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    `;
+                    cardContainer.appendChild(card);
+
+                    // Add form submission event listener
+                    document.getElementById(`deleteTreeForm${object.userData.id}`).addEventListener('submit', function() {
+                        formIsBeingSubmitted = true; // Set flag when form is submitted
+                    });
+
+                    document.getElementById(`editTree${treeData.id}`).addEventListener('click', function (event) {
+                        event.preventDefault();
+                        // Populate modal fields for tree editing
+                        document.getElementById('treeToEditId').textContent = treeData.id;
+                        document.getElementById('treeLatitude').value = treeData.data.lat;
+                        document.getElementById('treeLongitude').value = treeData.data.lon;
+                        document.getElementById('treeScale').value = String(treeData.data.scale);
+                        document.getElementById('editTreeForm').action = `/tree/${treeData.id}`;
+                    });
+                }
+            }
         });
+
+        if (!clicked) {
+            cardContainer.style.display = 'none';
+        }
     } else {
         cardContainer.style.display = 'none';
     }
@@ -421,8 +519,8 @@ function createContextMenu(x, y, point) {
             <input type="hidden" name="_token" value="${csrfToken}">
             <input type="hidden" name="lat" value="${latLon.lat}">
             <input type="hidden" name="lon" value="${latLon.lon}">
-            <input type="hidden" name="scale" value="3"> <!-- Default scale, adjust if needed -->
-            <button type="submit">Add Tree</button>
+            <input type="hidden" name="scale" value="3"> <!-- Default scale -->
+            <button type="submit" style="border: none; background: none; padding: 0; margin: 0; color: inherit; font: inherit; cursor: pointer;">Add Tree</button>
         </form>
         `;
 

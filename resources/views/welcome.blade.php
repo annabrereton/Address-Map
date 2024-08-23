@@ -19,6 +19,7 @@
 <body>
 
 @include('edit_address')
+@include('edit_tree')
 
     <div id="container"></div>
 

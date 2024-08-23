@@ -6,16 +6,6 @@ canvas {
     display: block;
 }
 
-/*.address-card {*/
-/*    position: absolute;*/
-/*    background-color: #fff;*/
-/*    border: 1px solid #ccc;*/
-/*    padding: 10px;*/
-/*    box-shadow: 0px 4px 8px rgba(0,0,0,0.2);*/
-/*    display: block; !* Ensure cards are visible *!*/
-/*    !*z-index: -1; !* Ensure the card is on top of other elements *!*!*/
-/*}*/
-
 #updateContainer {
     position: fixed;
     top: 20px;
@@ -33,14 +23,24 @@ canvas {
     flex-direction: column;
 }
 
-#houseForm input-group {
+#houseForm .input-group {
     margin-top: 0.2rem;
     margin-bottom: 0.2rem;
     padding: 0.2rem;
 }
 
-.input-group-text {
+#houseForm .input-group-text {
     width: 6rem;
+}
+
+#editTreeForm .input-group {
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+    padding: 0.2rem;
+}
+
+#editTreeForm .input-group-text {
+    width: 8rem;
 }
 
 #houseForm button {
