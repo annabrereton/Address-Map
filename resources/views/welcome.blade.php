@@ -24,6 +24,7 @@
 
     <script>
         window.addresses = @json($addresses);
+        window.trees = @json($trees);
     </script>
 
     <!-- Form to add a house/address -->

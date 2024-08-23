@@ -7,17 +7,8 @@ use Illuminate\Http\Request;
 
 class AddressController extends Controller
 {
-    public function index()
-    {
-        $addresses = Address::all();
-
-        return view('welcome', compact('addresses'));
-    }
-
-
     public function store(Request $request)
     {
-//        dd($request);
         $request->validate([
             'house' => 'required|string',
             'street' => 'required|string',
@@ -33,25 +24,11 @@ class AddressController extends Controller
         $address->lon = $request->input('longitude');
         $address->save();
 
-        // Return a JSON response
-//        return response()->json([
-//            'success' => true,
-//            'house' => $address,
-//        ]);
         return back()->with('success', 'Address added successfully.');
     }
 
-    public function edit($id)
-    {
-        $address = Address::findOrFail($id);
-
-        return view('edit_address', compact('address'));
-    }
-
-
     public function update(Request $request, $id)
     {
-//        dd($request);
         $request->validate([
             'house' => 'required|string',
             'street' => 'required|string',
