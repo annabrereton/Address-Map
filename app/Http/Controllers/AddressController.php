@@ -4,24 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Address;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AddressController extends Controller
 {
     public function store(Request $request)
     {
         $request->validate([
-            'house' => 'required|string',
+            'house_id' => 'required|integer',
+            'name' => 'required|string',
             'street' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
         ]);
 
         // Save the address to the database
         $address = new Address();
-        $address->house = $request->input('house');
+        $address->house_id = $request->input('house_id');
+        $address->name = $request->input('name');
         $address->street = $request->input('street');
-        $address->lat = $request->input('latitude');
-        $address->lon = $request->input('longitude');
         $address->save();
 
         return back()->with('success', 'Address added successfully.');
@@ -30,18 +29,14 @@ class AddressController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'house' => 'required|string',
+            'name' => 'required|string',
             'street' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
         ]);
 
         // Update the address in the database
         $address = Address::findOrFail($id);
-        $address->house = $request->input('house');
+        $address->name = $request->input('name');
         $address->street = $request->input('street');
-        $address->lat = $request->input('latitude');
-        $address->lon = $request->input('longitude');
         $address->save();
 
         return redirect()->back()->with('success', 'Address updated successfully.');
@@ -49,10 +44,13 @@ class AddressController extends Controller
 
     public function destroy(Request $request, $id)
     {
+        Log::info('Deleting address with ID: ' . $id);
+
         $address = Address::findOrFail($id);
         $address->delete();
 
-        return redirect()->back()->with('success', 'Address deleted successfully.');
+        return response()->json(['success' => 'Address deleted successfully.']);
+//        return redirect()->back()->with('success', 'Address deleted successfully.');
     }
 
 }

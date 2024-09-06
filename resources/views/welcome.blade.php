@@ -20,13 +20,20 @@
 
 @include('edit_address')
 @include('edit_tree')
+@include('create_house')
 
     <div id="container"></div>
 
     <script>
-        window.addresses = @json($addresses);
+        {{--window.addresses = @json($addresses);--}}
         window.trees = @json($trees);
+        window.houses = @json($houses);
     </script>
+
+    <!-- Button to Open Create House modal -->
+    <a href="#" id="createHouse" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+   data-bs-target="#createHouseModal">Create House</a>
+
 
     <!-- Form to add a house/address -->
     <div id="updateContainer" class="card">

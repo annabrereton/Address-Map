@@ -11,9 +11,13 @@ class Address extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'house',
+        'house_id',
+        'name',
         'street',
-        'lat',
-        'lon',
     ];
+
+    public function house()
+    {
+        return $this->belongsTo(House::class, 'house_id');
+    }
 }

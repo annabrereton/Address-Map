@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Address;
+use App\Models\House;
+use Illuminate\Http\Request;
+
+class HouseController extends Controller
+{
+    public function store(Request $request)
+    {
+        $request->validate([
+            'scale' => 'required|integer',
+            'wall_colour' => 'required|string',
+            'door_colour' => 'required|string',
+            'window_style' => 'required|string',
+            'door_style' => 'required|string',
+            'roof_colour' => 'required|string',
+            'lat' => 'required|numeric',
+            'lon' => 'required|numeric',
+        ]);
+
+        $house = House::create($request->all());
+
+        return redirect('/')->with('success', 'House created successfully.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'scale' => 'required|integer',
+            'wall_colour' => 'required|string',
+            'door_colour' => 'required|string',
+            'window_style' => 'required|string',
+            'door_style' => 'required|string',
+            'roof_colour' => 'required|string',
+            'lat' => 'required|numeric',
+            'lon' => 'required|numeric',
+        ]);
+
+        // Update the address in the database
+        $house = House::findOrFail($id);
+        $house->scale = $request->input('scale');
+        $house->wall_colour = $request->input('wall_colour');
+        $house->door_colour = $request->input('door_colour');
+        $house->window_style = $request->input('window_style');
+        $house->door_style = $request->input('door_style');
+        $house->roof_colour = $request->input('roof_colour');
+        $house->lat = $request->input('lat');
+        $house->lon = $request->input('lon');
+        $house->save();
+
+        return redirect()->back()->with('success', 'House updated successfully.');
+    }
+}

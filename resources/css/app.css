@@ -1,9 +1,18 @@
 body {
     margin: 0;
+    background-color: black;
 }
 
 canvas {
     display: block;
+}
+
+#createHouse {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    /*margin: 1rem;*/
+    padding: 0.6rem;
 }
 
 #updateContainer {
@@ -54,4 +63,8 @@ canvas {
 
 #houseForm button:hover {
     background-color: #0056b3;
+}
+
+#editHouseAddressModal .input-group-text {
+    width: 8rem;
 }

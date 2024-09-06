@@ -38,12 +38,12 @@
 
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">Leaf Colour</span>
-                        <input type="text" class="form-control" id="treeLongitude" name="leaf_colour" placeholder="Hex code" >
+                        <input type="text" class="form-control" id="leafColour" name="leaf_colour" placeholder="Hex code" >
                     </div>
 
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">Trunk Colour</span>
-                        <input type="text" class="form-control" id="leafColour" name="trunk_colour" placeholder="Hex code" >
+                        <input type="text" class="form-control" id="trunkColour" name="trunk_colour" placeholder="Hex code" >
                     </div>
 
                     <button type="submit" class="btn btn-primary">Save changes</button>
