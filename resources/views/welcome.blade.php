@@ -24,6 +24,8 @@
 
     <div id="container"></div>
 
+    <div id="cardContainer"></div>
+
     <script>
         {{--window.addresses = @json($addresses);--}}
         window.trees = @json($trees);
@@ -32,7 +34,7 @@
 
     <!-- Button to Open Create House modal -->
     <a href="#" id="createHouse" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-   data-bs-target="#createHouseModal">Create House</a>
+        data-bs-target="#createHouseModal">Create House</a>
 
 
     <!-- Form to add a house/address -->
