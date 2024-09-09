@@ -67,13 +67,10 @@ function onMouseClick(event) {
         // Display cardContainer if there are intersected objects
         cardContainer.style.display = 'block';
 
-        // Sort intersects to prioritize closest objects (optional)
-        intersects.sort((a, b) => a.distance - b.distance);
-
         // Process only the first intersected object
         const intersection = intersects[0];
         const object = intersection.object;
-        console.log(object);
+        console.log("Object: ", object);
 
         // Return if intersected object is mapMesh
         if (object === mapMesh) {
@@ -87,7 +84,7 @@ function onMouseClick(event) {
                 clicked = true;
                 const houseData = parent.userData;
                 const addresses = houseData.addresses;
-
+                console.log("House addresses: ", addresses)
                 // Create and display the address card
                 // (Same logic for house address cards as before)
                 createHouseCard(houseData, addresses, event);
@@ -101,16 +98,10 @@ function onMouseClick(event) {
         if (object === trunkMesh || object === leavesMesh) {
             const instanceIndex = intersection.instanceId;
 
-            // Ensure that the instance is only processed once per click
-            if (!processedTreeInstances.has(instanceIndex)) {
-                processedTreeInstances.add(instanceIndex);
+            const treeData = treeInstanceData[instanceIndex];
 
-                const treeData = treeInstanceData[instanceIndex];
-
-                // Create and display the tree card
-                createTreeCard(treeData, event);
-
-            }
+            // Create and display the tree card
+            createTreeCard(treeData, event);
         }
     }
 }

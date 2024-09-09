@@ -7,8 +7,6 @@ canvas {
     display: block;
 }
 
-
-
 #createHouse {
     position: fixed;
     top: 20px;
@@ -69,4 +67,12 @@ canvas {
 
 #editHouseAddressModal .input-group-text {
     width: 8rem;
+}
+
+.input-group .form-control[type="color"] {
+    height: calc(2.25rem + 2px); /* Same height as Bootstrap form controls */
+    padding: 0.375rem 0.75rem;   /* Same padding as other input types */
+    max-width: none;             /* Remove any automatic width constraints */
+    display: flex;
+    align-items: center;
 }

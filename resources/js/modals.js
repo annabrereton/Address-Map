@@ -2,6 +2,8 @@
 
 import axios from "./axiosConfig.js";
 import {setupTreeEventListeners} from "./eventListeners.js";
+import {fetchHouses, renderHouses, allHouses} from "./houses.js";
+import {scene} from "./map.js";
 
 function createHouseCard(houseData, addresses, event) {
     const card = document.createElement('div');
@@ -77,8 +79,7 @@ function populateHouseEditModal(houseData, addresses) {
         addressesContainer.insertAdjacentHTML('afterbegin', '<hr> <h5>Existing Addresses</h5>');
 
         addresses.forEach((address, index) => {
-            const addressForm = `
-                                <form id="editAddressForm${address.id}" method="POST" action="/address/${address.id}" class="my-3">
+            const addressForm = `<form id="editAddressForm${address.id}" method="POST" action="/address/${address.id}" class="my-3">
                                     <input type="hidden" name="_token" value="${csrfToken}">
                                     <input type="hidden" name="_method" value="PUT"> <!-- Use PUT method for updates -->
                                     <input type="hidden" name="address_id" value="${address.id}">
@@ -104,6 +105,7 @@ function populateHouseEditModal(houseData, addresses) {
                                 <form id="deleteAddressForm${address.id}" method="POST" action="/address/${address.id}">
                                     <input type="hidden" name="_token" value="${csrfToken}">
                                 </form>
+
                             `;
             addressesContainer.insertAdjacentHTML('beforeend', addressForm);
         });
@@ -118,36 +120,86 @@ function populateHouseEditModal(houseData, addresses) {
     }
 }
 
-function deleteAddress(addressId) {
+async function deleteAddress(addressId) {
     console.log(`Attempting to delete address with ID: ${addressId}`);
 
     if (confirm("Are you sure you want to delete this address?")) {
         const actionUrl = `/address/${addressId}`; // URL for the DELETE request
 
-        axios.delete(actionUrl)
-            .then(response => {
-                alert('Address deleted successfully!');
-
-                // Remove the address form from the DOM
-                const formToRemove = document.getElementById(`editAddressForm${addressId}`);
-                if (formToRemove) {
-                    formToRemove.remove();
+        try {
+            const response = await fetch(actionUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
-
-                // Check if there are any address forms left
-                const remainingForms = document.querySelectorAll('[id^=editAddressForm]');
-                if (remainingForms.length === 0) {
-                    // Remove the <h5> header if no addresses remain
-                    const elementsToRemove = document.querySelectorAll('#addressesContainer h5, #addressesContainer hr');
-                    elementsToRemove.forEach(element => element.remove());
-                }
-                console.log(response);
-            })
-            .catch(error => {
-                // Handle error response
-                alert('Failed to delete address.');
-                console.error(error);
             });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete address');
+            }
+
+            // Success: Handle UI updates
+            alert('Address deleted successfully!');
+
+            // Remove the address form from the DOM
+            const formToRemove = document.getElementById(`editAddressForm${addressId}`);
+            if (formToRemove) {
+                formToRemove.remove();
+            }
+
+            // Check if there are any address forms left
+            const remainingForms = document.querySelectorAll('[id^=editAddressForm]');
+            if (remainingForms.length === 0) {
+                // Remove the <h5> header if no addresses remain
+                const elementsToRemove = document.querySelectorAll('#addressesContainer h5, #addressesContainer hr');
+                elementsToRemove.forEach(element => element.remove());
+            }
+
+            // Fetch updated house data and refresh the map
+            await updateMapAfterDeletion();
+        } catch (error) {
+            alert('Failed to delete address.');
+            console.error('Error:', error);
+        }
+    }
+}
+
+// Clear houses function - Add a check before calling dispose to prevent errors
+function clearHouses() {
+    console.log(allHouses);
+    allHouses.forEach(houseGroup => {
+        console.log(houseGroup);
+
+        // Dispose of the meshes inside the house group
+        houseGroup.children.forEach(child => {
+            if (child.isMesh) {
+                child.geometry.dispose();
+                child.material.dispose();
+            }
+        });
+
+        // Remove the group from the scene
+        scene.remove(houseGroup);
+    });
+
+    // Clear the contents of allHouses without reassigning it
+    allHouses.length = 0;
+}
+
+// This function will handle fetching the updated house data and refreshing the map
+async function updateMapAfterDeletion() {
+    try {
+        // Call the API to fetch updated house data
+        const housesData = await fetchHouses();
+
+        // Clear the current houses from the map
+        clearHouses();
+
+        // Re-render houses on the map using the fetched data
+        renderHouses(housesData);
+    } catch (error) {
+        console.error('Error in updateMapAfterDeletion:', error);
     }
 }
 

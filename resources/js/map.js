@@ -79,17 +79,6 @@ function addLights() {
     scene.add(directionalLight.target);
 }
 
-// // Setup card container for displaying address info
-// function setupCardContainer() {
-//     cardContainer.id = 'cardContainer';
-//     cardContainer.style.position = 'absolute';
-//     cardContainer.style.top = '0px';
-//     cardContainer.style.left = '0px';
-//     cardContainer.style.width = '100vw';
-//     cardContainer.style.height = '100vh';
-//     document.body.appendChild(cardContainer);
-// }
-
 // Add contextmenu
 function createContextMenu(x, y, point) {
     if (contextMenu) {

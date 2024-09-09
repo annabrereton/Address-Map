@@ -2,19 +2,33 @@ import * as THREE from "three";
 import { scene, mapHeight } from './map.js';
 import { latLonToMapCoords } from "./utils.js";
 
-const houses = window.houses || [];
-
 let allHouses = [];
 
-// Iterate over houses variable and create the house using the db data
-function createHouses() {
-    houses.forEach(houseData => {
-        console.log(houseData);
+async function fetchHouses() {
+    try {
+        const response = await fetch('/api/fetch-houses');
+        if (!response.ok) {
+            throw new Error('Failed to fetch houses');
+        }
+        const data = await response.json();
+        // console.log(data);
+        window.houses = data;  // Store the fetched data in window.houses
+        return data;
+    } catch (error) {
+        console.error('Error in fetchHouses:', error);
+        throw error; // Rethrow the error so it can be handled in init
+    }
+}
+
+// Function to create house objects on the map
+function renderHouses() {
+    window.houses.forEach(houseData => {
 
         const mapCoords = latLonToMapCoords(houseData.lat, houseData.lon);
         const scale = houseData.scale || 1;
 
-        const house = HouseMod.create({wallColour: houseData.wallColour,
+        const house = HouseMod.create({
+            wallColour: houseData.wallColour,
             roofColour: houseData.roofColour,
             doorColour: houseData.doorColour,
             windowColour: houseData.windowColour,
@@ -27,20 +41,12 @@ function createHouses() {
         house.position.set(mapCoords.x, heightOffset, mapCoords.y);
 
         house.name = "house" + houseData.id;
-        house.userData.id = houseData.id;
-        house.userData.type = "house";
-        house.userData.lat = houseData.lat;
-        house.userData.lon = houseData.lon;
-        house.userData.scale = houseData.scale;
-        house.userData.doorStyle = houseData.doorStyle;
-        house.userData.windowStyle = houseData.windowStyle;
-        house.userData.doorColour = houseData.doorColour;
-        house.userData.roofColour = houseData.roofColour;
-        house.userData.wallColour = houseData.wallColour;
-        house.userData.addresses = houseData.addresses; // Add addresses to house userData
+        house.userData = { ...houseData };  // Store all house data in userData
+        house.userData.type = 'house';  // Additionally set userData.type to identify parent houseGroup objects with raycaster
 
         scene.add(house);
-        console.log("House created with address: ", house.userData.addresses)
+        // console.log("House created with address: ", house.userData.addresses);
+        // console.log("House UserData: ", house.userData);
         allHouses.push(house);
     });
 }
@@ -191,5 +197,5 @@ function createHouses() {
 
 
 export {
-    createHouses, allHouses
+    allHouses, fetchHouses, renderHouses
 }

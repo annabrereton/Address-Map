@@ -6,11 +6,29 @@ import { scene } from './map.js';
 import { latLonToMapCoords } from "./utils.js";
 import {convertIntegerToScale} from "./utils.js";
 
-const trees = window.trees || [];
+// const trees = window.trees || [];
 
 let trunkMesh, leavesMesh;
 const dummy = new THREE.Object3D();
 const treeInstanceData = []; // Initialize treeInstanceData as an empty array or object to store the tree data associated with each instance
+
+
+async function fetchTrees() {
+    try {
+        const response = await fetch('/api/fetch-trees');
+        if (!response.ok) {
+            throw new Error('Failed to fetch trees');
+        }
+        const data = await response.json();
+        // console.log(data);
+        window.trees = data;  // Store the fetched data in window.trees
+        return data;
+    } catch (error) {
+        console.error('Error in fetchTrees:', error);
+        throw error; // Rethrow the error so it can be handled in init
+    }
+}
+
 
 function loadTreeModel() {
     const treeLoader = new GLTFLoader();
@@ -106,5 +124,5 @@ function loadTreeModel() {
 
 
 export {
-    trunkMesh, leavesMesh, treeInstanceData, loadTreeModel
+    trunkMesh, leavesMesh, treeInstanceData, fetchTrees, loadTreeModel
 }

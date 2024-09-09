@@ -42,33 +42,42 @@
                                 <div class="col-4">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1">Window Style</span>
-                                        <input type="text" class="form-control" id="editWindowStyle" name="window_style" required>
+                                        <select id="editWindowStyle" name="window_style" class="form-select" required>
+                                            <option value="" disabled selected>Select</option>
+                                            <option value="simple">Rectangular</option>
+                                            <option value="fancy">Circular</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1">Door Style</span>
-                                        <input type="text" class="form-control" id="editDoorStyle" name="door_style" required>
+                                        <select id="editDoorStyle" name="door_style" class="form-select" required>
+                                            <option value="" disabled selected>Select</option>
+                                            <option value="simple">Simple</option>
+                                            <option value="fancy">Fancy</option>
+                                        </select>
                                     </div>
+
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-4">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1">Wall Colour</span>
-                                        <input type="text" class="form-control" id="editWallColour" name="wall_colour" required>
+                                        <input type="color" class="form-control" id="editWallColour" name="wall_colour" required>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1">Door Colour</span>
-                                        <input type="text" class="form-control" id="editDoorColour" name="door_colour" required>
+                                        <input type="color" class="form-control" id="editDoorColour" name="door_colour" required>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1">Roof Colour</span>
-                                        <input type="text" class="form-control" id="editRoofColour" name="roof_colour" required>
+                                        <input type="color" class="form-control" id="editRoofColour" name="roof_colour" required>
                                     </div>
                                 </div>
                             </div>

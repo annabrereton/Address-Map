@@ -7,7 +7,7 @@ use App\Http\Controllers\TreeController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::get('/', [HomeController::class, 'home'])->name('home')->name('home');
+Route::get('/', [HomeController::class, 'home'])->name('home');
 
 Route::post('/address', [AddressController::class, 'store'])->name('address.store');
 Route::put('/address/{address}', [AddressController::class, 'update'])->name('address.update');

@@ -6,14 +6,19 @@ use App\Models\Address;
 use App\Models\House;
 use App\Models\Tree;
 
-class HomeController
+class HomeController extends Controller
 {
     public function home()
     {
-//        $addresses = Address::all();
-        $trees = Tree::all();
+        return view('welcome');
+    }
+
+    public function getHouses()
+    {
+        // This is the new API endpoint that returns houses data as JSON
         $houses = House::with('addresses')->get();
 
+        // Map the houses with their addresses
         $housesWithAddresses = $houses->map(function ($house) {
             return [
                 'id' => $house->id,
@@ -35,7 +40,14 @@ class HomeController
                 })->toArray()
             ];
         });
-//dd($housesWithAddresses);
-        return view('welcome', ['houses' => $housesWithAddresses, 'trees' => $trees]);
+
+        return response()->json($housesWithAddresses);
+    }
+
+    public function getTrees() {
+
+        $trees = Tree::all();
+
+        return response()->json($trees);
     }
 }
