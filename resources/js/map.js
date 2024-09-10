@@ -5,6 +5,7 @@ import './bootstrap';
 import '../css/app.css';
 import * as THREE from 'three';
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { mapCoordsToLatLon } from './utils.js';
 
 // Global variables
@@ -40,7 +41,8 @@ function setupMapMesh() {
     const mapMaterial = new THREE.MeshStandardMaterial({color: 0x00ff00, side: THREE.DoubleSide});
     mapMesh = new THREE.Mesh(mapGeometry, mapMaterial);
     mapMesh.receiveShadow = true;
-    // mapMesh.rotation.y = Math.PI / 2; // Rotate 90 degrees along Y-axis
+    mapMesh.name = 'mapMesh';
+    mapMesh.userData.type = 'mapMesh';
     scene.add(mapMesh);
 
     // GRID HELPER
@@ -52,7 +54,7 @@ function setupMapMesh() {
 
 // Setup Orbit Controls
 function setupControls() {
-    controls = new OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(camera, labelRenderer.domElement);
     console.log("Controls set up.");
 }
 
@@ -125,6 +127,13 @@ function removeContextMenu() {
     }
 }
 
+// Set up CSS2D Renderer
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize( window.innerWidth, window.innerHeight );
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+document.body.appendChild( labelRenderer.domElement );
+
 // Handle window resize
 function handleResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -136,8 +145,8 @@ function handleResize() {
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
-    // console.log("Controls updated.");
     renderer.render(scene, camera);
+    labelRenderer.render(scene, camera); // Your CSS2DRenderer
 }
 
 export {

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { scene, mapHeight } from './map.js';
 import { latLonToMapCoords } from "./utils.js";
+import {createHouseLabel} from "./labels.js";
 
 let allHouses = [];
 
@@ -25,7 +26,7 @@ function renderHouses() {
     window.houses.forEach(houseData => {
 
         const mapCoords = latLonToMapCoords(houseData.lat, houseData.lon);
-        const scale = houseData.scale || 1;
+        const scale = houseData.scale || 3;
 
         const house = HouseMod.create({
             wallColour: houseData.wallColour,
@@ -45,9 +46,17 @@ function renderHouses() {
         house.userData.type = 'house';  // Additionally set userData.type to identify parent houseGroup objects with raycaster
 
         scene.add(house);
-        // console.log("House created with address: ", house.userData.addresses);
         // console.log("House UserData: ", house.userData);
         allHouses.push(house);
+
+        const houseLabel = createHouseLabel(houseData, houseData.addresses);
+        const labelOffset = houseLabel.scale.x * 7;
+        // console.log("Offset: ", labelOffset);
+        houseLabel.position.set(0, 0, labelOffset);
+        houseLabel.name = 'houseLabel';
+        houseLabel.visible = false;
+        house.add(houseLabel);
+        // console.log("HouseLabel: ", houseLabel);
     });
 }
 

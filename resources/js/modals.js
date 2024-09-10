@@ -1,58 +1,12 @@
 // Handle modal-related functionalities and interactions.
 
-import axios from "./axiosConfig.js";
-import {setupTreeEventListeners} from "./eventListeners.js";
 import {fetchHouses, renderHouses, allHouses} from "./houses.js";
 import {scene} from "./map.js";
-
-function createHouseCard(houseData, addresses, event) {
-    const card = document.createElement('div');
-    card.className = 'addresses-card';
-    card.style.position = 'absolute';
-    card.style.width = '15rem';
-    card.style.left = `${event.clientX}px`;
-    card.style.top = `${event.clientY}px`;
-    card.style.border = '1px solid #ccc';
-    card.style.borderRadius = '5px';
-    card.style.padding = '10px';
-    card.style.paddingTop = '20px';
-    card.style.backgroundColor = '#fff';
-    card.style.fontFamily = 'Arial, sans-serif';
-    card.style.display = 'block';
-
-    let addressContent = `<ul><strong>Addresses:</strong></ul>`;
-
-    // Iterate through addresses and append each to the card content
-    addresses.forEach((address, index) => {
-        addressContent += `
-            <li class="ms-4 decoration-none">${address.name} ${address.street}</li>
-            ${index < addresses.length - 1 ? '<hr>' : ''}
-        `;
-    });
-
-    card.innerHTML = `
-        ${addressContent}
-        <div class="d-flex justify-content-end gap-2">
-            <a href="#" id="editHouse${houseData.id}" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-               data-bs-target="#editHouseAddressModal">Edit</a>
-        </div>
-    `;
-
-    // Append the card to the container
-    cardContainer.appendChild(card);
-
-    // Set up event listener for the edit house button
-    const editHouseButton = document.getElementById(`editHouse${houseData.id}`);
-    if (editHouseButton) {
-        editHouseButton.addEventListener('click', function(event) {
-            event.preventDefault();
-            // Populate the modal fields with house data for editing
-            populateHouseEditModal(houseData, addresses);
-        });
-    }
-}
+import {currentLabel} from "./mouseHandlers.js";
 
 function populateHouseEditModal(houseData, addresses) {
+    console.log("Populating modal...", houseData);
+
     // Set house data in the edit modal
     document.getElementById('house_id').value = houseData.id;
     document.getElementById('editHouseScale').value = String(houseData.scale);
@@ -101,7 +55,7 @@ function populateHouseEditModal(houseData, addresses) {
                                         </div>
                                     </div>
                                 </form>
-                                ${index < addresses.length - 1 ? '<hr>' : ''}
+                                ${index < addresses.length - 1 ? `<hr id="divider${address.id}">` : ''}
                                 <form id="deleteAddressForm${address.id}" method="POST" action="/address/${address.id}">
                                     <input type="hidden" name="_token" value="${csrfToken}">
                                 </form>
@@ -109,6 +63,7 @@ function populateHouseEditModal(houseData, addresses) {
                             `;
             addressesContainer.insertAdjacentHTML('beforeend', addressForm);
         });
+
         // Add event listener for dynamically created delete buttons
         addressesContainer.addEventListener('click', function(event) {
             if (event.target && event.target.classList.contains('delete-address-btn')) {
@@ -117,10 +72,13 @@ function populateHouseEditModal(houseData, addresses) {
                 deleteAddress(addressId);
             }
         });
+
+        currentLabel.visible = false;
+        currentLabel = null;  // Clear the reference
     }
 }
 
-async function deleteAddress(addressId) {
+async function deleteAddress(addressId, houseData) {
     console.log(`Attempting to delete address with ID: ${addressId}`);
 
     if (confirm("Are you sure you want to delete this address?")) {
@@ -143,10 +101,8 @@ async function deleteAddress(addressId) {
             alert('Address deleted successfully!');
 
             // Remove the address form from the DOM
-            const formToRemove = document.getElementById(`editAddressForm${addressId}`);
-            if (formToRemove) {
-                formToRemove.remove();
-            }
+            const formElementsToRemove = document.querySelectorAll(`#editAddressForm${addressId}, #divider${addressId}`);
+            formElementsToRemove.forEach(element => element.remove());
 
             // Check if there are any address forms left
             const remainingForms = document.querySelectorAll('[id^=editAddressForm]');
@@ -198,55 +154,25 @@ async function updateMapAfterDeletion() {
 
         // Re-render houses on the map using the fetched data
         renderHouses(housesData);
+
     } catch (error) {
         console.error('Error in updateMapAfterDeletion:', error);
     }
 }
 
-function createTreeCard(treeData, event) {
-    const card = document.createElement('div');
-    card.className = 'tree-card';
-    card.style.position = 'absolute';
-    card.style.width = '10rem';
-    card.style.left = `${event.clientX}px`;
-    card.style.top = `${event.clientY}px`;
-    card.style.border = '1px solid #ccc';
-    card.style.borderRadius = '5px';
-    card.style.padding = '10px';
-    card.style.backgroundColor = '#fff';
-    card.style.fontFamily = 'Arial, sans-serif';
-    card.style.display = 'block';
-
-    card.innerHTML = `
-        <p><strong>Tree ID:</strong> ${treeData.id}</p>
-        <p><strong>Lat:</strong> ${treeData.data.lat}</p>
-        <p><strong>Lon:</strong> ${treeData.data.lon}</p>
-        <p><strong>Scale:</strong> ${treeData.data.scale}</p>
-        <div class="d-flex justify-content-end gap-2">
-            <a href="#" id="editTree${treeData.id}" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-               data-bs-target="#editTreeModal">Edit</a>
-            <form id="deleteTreeForm${treeData.id}" action="/tree/${treeData.id}" method="POST">
-                <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
-                <input type="hidden" name="_method" value="DELETE">
-                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-            </form>
-        </div>
-    `;
-
-    // Append the card to the container
-    cardContainer.appendChild(card);
-
-    // Set up event listeners for the newly created tree card - delete/edit
-    setupTreeEventListeners(treeData);
-}
-
 // Function to populate the tree edit modal with tree data
 function populateTreeEditModal(treeData) {
+    console.log("Populating tree modal...");
     document.getElementById('treeToEditId').textContent = treeData.id;
     document.getElementById('treeLatitude').value = treeData.data.lat;
     document.getElementById('treeLongitude').value = treeData.data.lon;
     document.getElementById('treeScale').value = String(treeData.data.scale);
     document.getElementById('editTreeForm').action = `/tree/${treeData.id}`;
+
+    currentLabel.visible = false;
+    currentLabel = null;  // Clear the reference
 }
 
-export { createHouseCard, populateHouseEditModal, deleteAddress, createTreeCard, populateTreeEditModal };
+export { populateHouseEditModal, deleteAddress, populateTreeEditModal };
+
+

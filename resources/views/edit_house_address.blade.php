@@ -44,8 +44,8 @@
                                         <span class="input-group-text" id="basic-addon1">Window Style</span>
                                         <select id="editWindowStyle" name="window_style" class="form-select" required>
                                             <option value="" disabled selected>Select</option>
-                                            <option value="simple">Rectangular</option>
-                                            <option value="fancy">Circular</option>
+                                            <option value="rectangular">Rectangular</option>
+                                            <option value="circular">Circular</option>
                                         </select>
                                     </div>
                                 </div>

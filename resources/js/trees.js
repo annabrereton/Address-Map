@@ -2,7 +2,7 @@
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from "three";
-import { scene } from './map.js';
+import {mapHeight, scene} from './map.js';
 import { latLonToMapCoords } from "./utils.js";
 import {convertIntegerToScale} from "./utils.js";
 
@@ -89,8 +89,9 @@ function loadTreeModel() {
 
             // Convert integer scale to decimal
             const scale = convertIntegerToScale(tree.scale);
+            const heightOffset = (mapHeight / 2) + scale;
 
-            dummy.position.set(treeCoords.x, 10, treeCoords.y); // Set the x, y position of the dummy object based on the map coordinates
+            dummy.position.set(treeCoords.x, 9, treeCoords.y); // Set the x, y position of the dummy object based on the map coordinates
             dummy.rotation.z = Math.PI;  // Rotate to match the map's orientation
             dummy.scale.set(scale, scale, scale); // Set the dummy's scale
             dummy.updateMatrix(); // Update the dummy's matrix and apply it to the instance

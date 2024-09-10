@@ -1,10 +1,19 @@
 // Mouse move event handler: Handle mouse-related events and actions.
 import * as THREE from "three";
-import {contextMenu, removeContextMenu, raycaster, setupRaycaster, camera, mapMesh, createContextMenu} from './map.js';
+import {createTreeLabel, createCoordsLabel, createHouseLabel} from './labels.js';
+import {
+    contextMenu,
+    removeContextMenu,
+    raycaster,
+    camera,
+    mapMesh,
+    createContextMenu,
+    scene
+} from './map.js';
 import { trunkMesh, leavesMesh, treeInstanceData } from './trees.js';
 import { mapCoordsToLatLon } from './utils.js';
 import { allHouses } from './houses.js';
-import { createHouseCard, populateHouseEditModal, deleteAddress, createTreeCard, populateTreeEditModal } from './modals.js';
+import { populateHouseEditModal, deleteAddress, populateTreeEditModal } from './modals.js';
 
 
 let intersectionPoint;
@@ -19,25 +28,16 @@ let clicked = false;
 // Variable to check if form is being submitted:
 let formIsBeingSubmitted = false;
 
-// Flag to keep track of processed tree instances
-const processedTreeInstances = new Set();
+let currentLabel = null; // To keep track of the current label being displayed
 
 
 function onMouseMove(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    // console.log("Mouse move event:", mouse); // Debug log
 }
 
 
-// Mouse click event handler
-function onMouseClick(event) {
-    // console.log(event); // Check if the event is being received correctly
-    // if (!event || event.button === undefined) {
-    //     console.error('Mouse event is undefined or has no button property');
-    //     return;
-    // }
-
+function onObjectClick(event) {
     // Remove context menu if clicked outside
     if (contextMenu && !contextMenu.contains(event.target)) {
         removeContextMenu();
@@ -51,57 +51,75 @@ function onMouseClick(event) {
         return;
     }
 
-    // Update the raycaster based on the current mouse position
     raycaster.setFromCamera(mouse, camera);
 
-    // Calculate objects intersecting the ray
+    // Perform raycasting to find the intersected object (house, tree, etc.)
     const intersects = raycaster.intersectObjects([...allHouses, mapMesh, trunkMesh, leavesMesh]); // Checks which objects in the scene the ray intersects. For each intersected object, it creates an Intersection object, saved in the intersects[] array.
-    console.log("Number of intersects:", intersects.length);
-    console.log("Intersects: ", intersects);
 
-    // Clear existing address cards
-    cardContainer.innerHTML = '';
-
-    // Check the raycaster has intersected objects
     if (intersects.length > 0) {
-        // Display cardContainer if there are intersected objects
-        cardContainer.style.display = 'block';
-
-        // Process only the first intersected object
         const intersection = intersects[0];
-        const object = intersection.object;
-        console.log("Object: ", object);
+        const clickedObject = intersection.object;
+        // console.log("clickedObject: ", clickedObject);
 
-        // Return if intersected object is mapMesh
-        if (object === mapMesh) {
-            return;
+        // If a label is already displayed, remove it
+        if (currentLabel) {
+            console.log("Label: ", currentLabel);
+            currentLabel.visible = false;
+            currentLabel = null;
+
+            // currentLabel.parent.remove(currentLabel);  // Remove from its parent
+            // currentLabel = null;
         }
 
-        // Traverse up to the parent group to find the house group
-        let parent = object.parent;
+        // Check if the clicked object is a house (or any specific object type)
+        let parent = clickedObject.parent;
+        console.log("parent: ", parent);
         while (parent) {
             if (parent.userData && parent.userData.type === 'house') {
                 clicked = true;
                 const houseData = parent.userData;
                 const addresses = houseData.addresses;
-                console.log("House addresses: ", addresses)
-                // Create and display the address card
-                // (Same logic for house address cards as before)
-                createHouseCard(houseData, addresses, event);
+                // console.log("House addresses: ", addresses)
+
+
+                // Search for the parent houseGroup houseLabel child
+                let houseLabel = parent.children.find(child => child.name === 'houseLabel');
+
+                if (houseLabel) {
+                    // console.log("House label is now visible:", houseLabel);
+                    currentLabel = houseLabel;  // Store the label so it can be removed later
+                    currentLabel.visible = true;  // Make the house label visible
+                } else {
+                    console.error("House label not found for this house.");
+                }
+
+                // // Create house labels onObjectClick
+                // let houseLabel = createHouseLabel(houseData, addresses);
+                // console.log("Label: ", houseLabel);
+                // houseLabel.position.set(0,0,0); // Can't use intersection.point here as that is world coords whereas here we are attaching to the house's coordinate system
+                // // Attach the label to the clicked object parent (houseGroup)
+                // parent.add(houseLabel);
+                //
+                // // Store the label so it can be removed later
+                // currentLabel = houseLabel;
 
                 break; // Exit the loop once the house is found
             }
             parent = parent.parent;
         }
 
-        // Handle tree interactions (no need to loop)
-        if (object === trunkMesh || object === leavesMesh) {
+        // Handle tree interactions
+        if (clickedObject === trunkMesh || clickedObject === leavesMesh) {
             const instanceIndex = intersection.instanceId;
-
             const treeData = treeInstanceData[instanceIndex];
 
-            // Create and display the tree card
-            createTreeCard(treeData, event);
+            // Create the tree label
+            let treeLabel = createTreeLabel(treeData);
+            treeLabel.position.set(intersection.point.x, intersection.point.y, intersection.point.z);
+            clickedObject.add(treeLabel);
+
+            // Store the label so it can be removed later
+            currentLabel = treeLabel;
         }
     }
 }
@@ -110,52 +128,41 @@ function onMouseClick(event) {
 function onMouseDoubleClick(event) {
     if (event.button !== 0) return; // Ignore if it's not a left-click
 
+    if (currentLabel) {
+        currentLabel.visible = false;
+        currentLabel = null;
+    }
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects([mapMesh]);
 
     // console.log("Number of intersects:", intersects.length);
     // console.log("Intersects: ", intersects);
 
-    // Clear existing address cards
-    cardContainer.innerHTML = '';
-
     if (intersects.length > 0) {
-        cardContainer.style.display = 'block';
 
         const intersection = intersects[0];
         intersectionPoint = intersection.point;
-        // console.log('Coordinates:', intersectionPoint);
+        console.log('Coordinates:', intersectionPoint);
 
-        const object = intersection.object;
-        // console.log('object: ', object.name);
+        const clickedObject = intersection.object;
+        console.log("clickedObject: ", clickedObject);
+        console.log("clickedObject: ", clickedObject.name);
 
-        if (object === mapMesh) {
+        if (clickedObject.userData.type === 'mapMesh') {
 
             // Convert Three.js coordinates (x, y) to latitude and longitude
-            const { lat, lon } = mapCoordsToLatLon(intersection.point.x, intersection.point.y);
-            // console.log('Latitude:', lat, 'Longitude:', lon);
+            const { lat, lon } = mapCoordsToLatLon(intersection.point.x, intersection.point.z);
+            console.log('Latitude:', lat, 'Longitude:', lon);
 
-            // Display the coordinates
-            const card = document.createElement('div');
-            card.className = 'coords-card';
-            card.style.position = 'absolute';
-            card.style.width = '10rem';
-            card.style.left = `${event.clientX}px`;
-            card.style.top = `${event.clientY}px`;
-            card.style.border = '1px solid #ccc';
-            card.style.borderRadius = '5px';
-            card.style.padding = '10px';
-            card.style.backgroundColor = '#fff';
-            card.style.fontFamily = 'Arial, sans-serif';
-            card.style.zIndex = 1000;
-            card.style.display = 'block';
+            let coordsLabel = createCoordsLabel(lat, lon);
+            console.log("Coords Label: ", coordsLabel);
+            coordsLabel.position.set(intersection.point.x, intersection.point.y, intersection.point.z);
+            clickedObject.add(coordsLabel);
+            console.log("clickedObject: ", clickedObject);
 
-            card.innerHTML = `
-                <p><strong>Latitude:</strong> ${lat.toFixed(6)}</p>
-                <p><strong>Longitude:</strong> ${lon.toFixed(6)}</p>
-            `;
-
-            cardContainer.appendChild(card);
+            // Store the label so it can be removed later
+            currentLabel = coordsLabel;
         }
     }
 }
@@ -163,9 +170,6 @@ function onMouseDoubleClick(event) {
 // Context menu event handler
 function onContextMenu(event) {
     event.preventDefault();
-
-    // Remove existing address and coordinates cards
-    cardContainer.innerHTML = '';
 
     // Update the raycaster based on the current mouse position
     raycaster.setFromCamera(mouse, camera);
@@ -185,5 +189,5 @@ function onContextMenu(event) {
 
 
 export {
-    mouse, onMouseClick, onMouseMove, onMouseDoubleClick, onContextMenu, formIsBeingSubmitted, populateTreeEditModal, populateHouseEditModal, deleteAddress
+    mouse, currentLabel, onMouseMove, onObjectClick, onMouseDoubleClick, onContextMenu, formIsBeingSubmitted, populateTreeEditModal, populateHouseEditModal, deleteAddress
 }
