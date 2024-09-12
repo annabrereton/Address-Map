@@ -53,4 +53,22 @@ class HouseController extends Controller
 
         return redirect()->back()->with('success', 'House updated successfully.');
     }
+
+    public function updateCoordinates(Request $request, $id)
+    {
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lon' => 'required|numeric',
+        ]);
+
+        $house = House::findOrFail($id);
+        $house->lat = $request->input('lat');
+        $house->lon = $request->input('lon');
+        $house->save();
+
+        return response()->json([
+            'message' => 'House coordinates updated successfully.',
+            'house' => $house
+        ]);
+    }
 }

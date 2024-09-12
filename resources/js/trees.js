@@ -11,6 +11,7 @@ import {convertIntegerToScale} from "./utils.js";
 let trunkMesh, leavesMesh;
 const dummy = new THREE.Object3D();
 const treeInstanceData = []; // Initialize treeInstanceData as an empty array or object to store the tree data associated with each instance
+const allTrees = [];
 
 
 async function fetchTrees() {
@@ -33,7 +34,7 @@ async function fetchTrees() {
 function loadTreeModel() {
     const treeLoader = new GLTFLoader();
     treeLoader.load('/assets/tree.glb', function (gltf) {
-        console.log('Loaded GLTF file:', gltf.scene);
+        // console.log('Loaded GLTF file:', gltf.scene);
 
         const trunkMeshGLTF = gltf.scene.getObjectByName('treetrunk');
         const leavesMeshGLTF = gltf.scene.getObjectByName('treeleaves');
@@ -74,9 +75,17 @@ function loadTreeModel() {
         trunkMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         leavesMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
-        scene.add(trunkMesh);
-        scene.add(leavesMesh);
-        // console.log(trunkMesh)
+        // scene.add(trunkMesh);
+        // scene.add(leavesMesh);
+        // console.log(trunkMesh);
+
+        const treeGroup = new THREE.Group();
+        treeGroup.add(trunkMesh);
+        treeGroup.add(leavesMesh);
+        scene.add(treeGroup);
+        // console.log("TreeGroup: ", treeGroup);
+        allTrees.push(treeGroup);
+        // allObjects.push(treeGroup); // Add each house to the draggable objects array
 
         trunkMesh.instanceMatrix.needsUpdate = true;
         leavesMesh.instanceMatrix.needsUpdate = true;
@@ -116,7 +125,7 @@ function loadTreeModel() {
         trunkMesh.instanceColor.needsUpdate = true;
         leavesMesh.instanceColor.needsUpdate = true;
 
-        console.log("Tree Instance Data: ", treeInstanceData);
+        // console.log("Tree Instance Data: ", treeInstanceData);
 
     }, undefined, function (error) {
         console.error('An error occurred while loading the GLTF model:', error);
@@ -125,5 +134,5 @@ function loadTreeModel() {
 
 
 export {
-    trunkMesh, leavesMesh, treeInstanceData, fetchTrees, loadTreeModel
+    trunkMesh, leavesMesh, allTrees, treeInstanceData, fetchTrees, loadTreeModel
 }

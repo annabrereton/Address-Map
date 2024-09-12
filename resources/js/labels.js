@@ -82,7 +82,7 @@ function createTreeLabel(treeData) {
     if (editTreeButton) {
         editTreeButton.addEventListener('click', function(event) {
             event.preventDefault();
-            console.log("Opening tree edit modal...");
+            // console.log("Opening tree edit modal...");
             event.stopPropagation(); // Prevent the event from propagating further
             populateTreeEditModal(treeData);  // Populate modal fields for tree editing
         });

@@ -2,7 +2,17 @@
 import './bootstrap';
 import '../css/app.css';
 import { setupEventListeners } from './eventListeners.js';
-import { setupScene, setupControls, addLights, setupMapMesh, setupRaycaster, animate, handleResize } from './map.js';
+import {
+    setupScene,
+    setupOrbitControls,
+    setupDragControls,
+    addLights,
+    setupMapMesh,
+    setupRaycaster,
+    animate,
+    handleResize,
+    // createTestCube
+} from './map.js';
 import { fetchTrees, loadTreeModel } from './trees.js';
 import { fetchHouses, renderHouses } from './houses.js';
 
@@ -29,9 +39,16 @@ async function init() {
         console.error('Error fetching trees:', error);
     }
 
-    setupEventListeners();
+
     setupRaycaster();
-    setupControls();
+    setupOrbitControls();
+    // Now that both houses and trees are loaded, setup drag controls
+    // setupDragControls();
+
+    // createTestCube();
+    setupEventListeners();
+
+
     animate();
     window.addEventListener('resize', handleResize);
 }

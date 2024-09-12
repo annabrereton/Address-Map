@@ -5,11 +5,14 @@ import './bootstrap';
 import '../css/app.css';
 import * as THREE from 'three';
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { DragControls } from 'three/addons/controls/DragControls.js';
+import { CSS2DRenderer} from 'three/addons/renderers/CSS2DRenderer.js';
 import { mapCoordsToLatLon } from './utils.js';
+// import { heightOffset } from './houses.js';
 
 // Global variables
-let scene, camera, renderer, controls;
+let scene, camera, renderer, orbitControls;
+let dragControls;
 let mapMesh;
 
 const mapDiameter = 300;        // Diameter in meters
@@ -50,16 +53,6 @@ function setupMapMesh() {
     grid.rotation.y = Math.PI / 2;
     grid.position.z = 5.2
     scene.add(grid);
-}
-
-// Setup Orbit Controls
-function setupControls() {
-    controls = new OrbitControls(camera, labelRenderer.domElement);
-    console.log("Controls set up.");
-}
-
-function setupRaycaster() {
-    const raycaster = new THREE.Raycaster();
 }
 
 // Add lighting to the scene
@@ -134,6 +127,88 @@ labelRenderer.domElement.style.position = 'absolute';
 labelRenderer.domElement.style.top = '0px';
 document.body.appendChild( labelRenderer.domElement );
 
+
+// Setup Orbit Controls
+function setupOrbitControls() {
+    orbitControls = new OrbitControls(camera, labelRenderer.domElement);
+    console.log("orbitControls set up.");
+}
+
+// Function to setup DragControls
+function setupDragControls(houseToDrag, heightOffset) {
+    if (dragControls) {
+        dragControls.dispose(); // Dispose of existing controls if any
+    }
+
+    dragControls = new DragControls(houseToDrag, camera, labelRenderer.domElement);
+    dragControls.transformGroup = true;
+
+    dragControls.addEventListener('dragstart', function (event) {
+        orbitControls.enabled = false;
+        console.log('Drag started on:', event.object.name);
+    });
+
+    dragControls.addEventListener('drag', function (event) {
+        // Restrict movement to X and Z axes
+        event.object.position.y = heightOffset; // Fix Y position
+        render();
+    });
+
+    dragControls.addEventListener('dragend', function (event) {
+        orbitControls.enabled = true;
+        console.log('Drag ended on:', event.object.name);
+
+        // Capture the new coordinates for the moved house
+        const movedHouse = event.object;
+        const position = movedHouse.position;
+        const { lat, lon } = mapCoordsToLatLon(position.x, position.z);
+        const houseId = movedHouse.userData.id;
+
+        // Send the updated position to the server
+        updateHouseCoordinates(houseId, lat, lon);
+    });
+
+    dragControls.addEventListener('hoveron', function (event) {
+        console.log('Hovering over:', event.object.name);
+    });
+
+    dragControls.addEventListener('hoveroff', function (event) {
+        console.log('Stopped hovering over:', event.object.name);
+    });
+}
+
+// Function to send updated dragged house coordinates to the server
+async function updateHouseCoordinates(houseId, x, z) {
+    try {
+        const response = await fetch(`/api/house/${houseId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') // Include CSRF token if using Laravel
+            },
+            body: JSON.stringify({
+                id: houseId,
+                lat: x,
+                lon: z
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update house coordinates');
+        }
+
+        const data = await response.json();
+        console.log('Coordinates updated successfully:', data);
+    } catch (error) {
+        console.error('Error updating coordinates:', error);
+    }
+}
+
+// Function to set up Raycaster
+function setupRaycaster() {
+    const raycaster = new THREE.Raycaster();
+}
+
 // Handle window resize
 function handleResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -144,12 +219,19 @@ function handleResize() {
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
-    controls.update();
+    orbitControls.update();
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera); // Your CSS2DRenderer
 }
 
+function render() {
+
+    renderer.render( scene, camera );
+
+}
+
 export {
-    scene, camera, renderer, controls, setupScene, setupControls, raycaster, mapMesh, mapDiameter, mapHeight, mapRadius, setupMapMesh,
-    setupRaycaster, addLights, contextMenu, createContextMenu, removeContextMenu, handleResize, animate
+    scene, camera, renderer, orbitControls, setupScene, setupOrbitControls, raycaster, mapMesh, mapDiameter, mapHeight, mapRadius, setupMapMesh,
+    setupRaycaster, addLights, contextMenu, createContextMenu, removeContextMenu, handleResize, animate, setupDragControls,
+    dragControls, render
 };

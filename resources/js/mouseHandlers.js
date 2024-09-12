@@ -1,6 +1,6 @@
 // Mouse move event handler: Handle mouse-related events and actions.
 import * as THREE from "three";
-import {createTreeLabel, createCoordsLabel, createHouseLabel} from './labels.js';
+import {createTreeLabel, createCoordsLabel} from './labels.js';
 import {
     contextMenu,
     removeContextMenu,
@@ -8,7 +8,7 @@ import {
     camera,
     mapMesh,
     createContextMenu,
-    scene
+    render, setupDragControls, mapHeight
 } from './map.js';
 import { trunkMesh, leavesMesh, treeInstanceData } from './trees.js';
 import { mapCoordsToLatLon } from './utils.js';
@@ -36,15 +36,74 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
+let enableSelection = false;
 
-function onObjectClick(event) {
+
+function onPointerDown( event ) {
+
+    enableSelection = true;
+
+}
+
+function onPointerUp() {
+
+    enableSelection = false;
+
+}
+
+function onHouseClick(event) {
+    event.preventDefault();
+
+    raycaster.setFromCamera(mouse, camera);
+
+    // Check for intersections with all house objects
+    const intersections = raycaster.intersectObjects(allHouses, true); // true ensures children are considered
+    console.log("Intersections", intersections);
+
+    if (intersections.length > 0) {
+        const object = intersections[0].object; // Get the clicked object
+        console.log("House part clicked: ", object.name);
+
+        let parent = object.parent; // Get the parent (house group)
+        console.log("Parent: ", parent.name, parent);
+
+        // Check if the parent is a valid house group
+        if (parent.userData && parent.userData.type === 'house') {
+            let offsetY = (mapHeight / 2) + parent.userData.scale;
+            // Enable DragControls passing the entire house group (parent)
+            setupDragControls([parent], offsetY);
+        }
+    }
+
+    render();
+}
+
+function onMouseClick(event) {
+    if (event.button !== 0) return; // Ignore if it's not a left-click
+
+    if (currentLabel) {
+        currentLabel.visible = false;
+        currentLabel = null;
+    }
+
     // Remove context menu if clicked outside
     if (contextMenu && !contextMenu.contains(event.target)) {
         removeContextMenu();
     }
+}
 
-    // Ignore if it's not a left-click
-    if (event.button !== 0) return;
+function onMouseDoubleClick(event) {
+    if (event.button !== 0) return; // Ignore if it's not a left-click
+
+    if (currentLabel) {
+        currentLabel.visible = false;
+        currentLabel = null;
+    }
+
+    // Remove context menu if clicked outside
+    if (contextMenu && !contextMenu.contains(event.target)) {
+        removeContextMenu();
+    }
 
     // Check if the click is on a delete button
     if (event.target.closest('button') && event.target.closest('button').classList.contains('btn-danger')) {
@@ -56,24 +115,37 @@ function onObjectClick(event) {
     // Perform raycasting to find the intersected object (house, tree, etc.)
     const intersects = raycaster.intersectObjects([...allHouses, mapMesh, trunkMesh, leavesMesh]); // Checks which objects in the scene the ray intersects. For each intersected object, it creates an Intersection object, saved in the intersects[] array.
 
+
+    // console.log("Number of intersects:", intersects.length);
+    // console.log("Intersects: ", intersects);
+
     if (intersects.length > 0) {
+
         const intersection = intersects[0];
+        intersectionPoint = intersection.point;
+        // console.log('Coordinates:', intersectionPoint);
+
         const clickedObject = intersection.object;
         // console.log("clickedObject: ", clickedObject);
 
-        // If a label is already displayed, remove it
-        if (currentLabel) {
-            console.log("Label: ", currentLabel);
-            currentLabel.visible = false;
-            currentLabel = null;
+        if (clickedObject.userData.type === 'mapMesh') {
 
-            // currentLabel.parent.remove(currentLabel);  // Remove from its parent
-            // currentLabel = null;
+            // Convert Three.js coordinates (x, y) to latitude and longitude
+            const { lat, lon } = mapCoordsToLatLon(intersection.point.x, intersection.point.z);
+            // console.log('Latitude:', lat, 'Longitude:', lon);
+
+            let coordsLabel = createCoordsLabel(lat, lon);
+            // console.log("Coords Label: ", coordsLabel);
+            coordsLabel.position.set(intersection.point.x, intersection.point.y, intersection.point.z);
+            clickedObject.add(coordsLabel);
+
+            // Store the label so it can be removed later
+            currentLabel = coordsLabel;
         }
 
         // Check if the clicked object is a house (or any specific object type)
         let parent = clickedObject.parent;
-        console.log("parent: ", parent);
+        // console.log("parent: ", parent);
         while (parent) {
             if (parent.userData && parent.userData.type === 'house') {
                 clicked = true;
@@ -93,16 +165,6 @@ function onObjectClick(event) {
                     console.error("House label not found for this house.");
                 }
 
-                // // Create house labels onObjectClick
-                // let houseLabel = createHouseLabel(houseData, addresses);
-                // console.log("Label: ", houseLabel);
-                // houseLabel.position.set(0,0,0); // Can't use intersection.point here as that is world coords whereas here we are attaching to the house's coordinate system
-                // // Attach the label to the clicked object parent (houseGroup)
-                // parent.add(houseLabel);
-                //
-                // // Store the label so it can be removed later
-                // currentLabel = houseLabel;
-
                 break; // Exit the loop once the house is found
             }
             parent = parent.parent;
@@ -120,49 +182,6 @@ function onObjectClick(event) {
 
             // Store the label so it can be removed later
             currentLabel = treeLabel;
-        }
-    }
-}
-
-// Mouse double click event handler
-function onMouseDoubleClick(event) {
-    if (event.button !== 0) return; // Ignore if it's not a left-click
-
-    if (currentLabel) {
-        currentLabel.visible = false;
-        currentLabel = null;
-    }
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects([mapMesh]);
-
-    // console.log("Number of intersects:", intersects.length);
-    // console.log("Intersects: ", intersects);
-
-    if (intersects.length > 0) {
-
-        const intersection = intersects[0];
-        intersectionPoint = intersection.point;
-        console.log('Coordinates:', intersectionPoint);
-
-        const clickedObject = intersection.object;
-        console.log("clickedObject: ", clickedObject);
-        console.log("clickedObject: ", clickedObject.name);
-
-        if (clickedObject.userData.type === 'mapMesh') {
-
-            // Convert Three.js coordinates (x, y) to latitude and longitude
-            const { lat, lon } = mapCoordsToLatLon(intersection.point.x, intersection.point.z);
-            console.log('Latitude:', lat, 'Longitude:', lon);
-
-            let coordsLabel = createCoordsLabel(lat, lon);
-            console.log("Coords Label: ", coordsLabel);
-            coordsLabel.position.set(intersection.point.x, intersection.point.y, intersection.point.z);
-            clickedObject.add(coordsLabel);
-            console.log("clickedObject: ", clickedObject);
-
-            // Store the label so it can be removed later
-            currentLabel = coordsLabel;
         }
     }
 }
@@ -189,5 +208,6 @@ function onContextMenu(event) {
 
 
 export {
-    mouse, currentLabel, onMouseMove, onObjectClick, onMouseDoubleClick, onContextMenu, formIsBeingSubmitted, populateTreeEditModal, populateHouseEditModal, deleteAddress
+    mouse, currentLabel, onMouseMove, formIsBeingSubmitted, onContextMenu, onMouseClick, onMouseDoubleClick,
+    populateTreeEditModal, populateHouseEditModal, deleteAddress, onHouseClick, onPointerDown, onPointerUp
 }
