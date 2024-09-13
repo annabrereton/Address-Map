@@ -24,6 +24,7 @@ class HomeController extends Controller
                 'id' => $house->id,
                 'lat' => $house->lat,
                 'lon' => $house->lon,
+                'rotation' => $house->rotation,
                 'scale' => $house->scale,
                 'wallColour' => $house->wall_colour,
                 'doorColour' => $house->door_colour,

@@ -8,7 +8,8 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import { CSS2DRenderer} from 'three/addons/renderers/CSS2DRenderer.js';
 import { mapCoordsToLatLon } from './utils.js';
-// import { heightOffset } from './houses.js';
+import {allHouses} from "./houses.js";
+import {mouse} from "./mouseHandlers.js";
 
 // Global variables
 let scene, camera, renderer, orbitControls;
@@ -21,6 +22,11 @@ const mapRadius = mapDiameter / 2;
 
 const raycaster = new THREE.Raycaster();
 let contextMenu;
+
+export let houseSelectionEnabled = false;
+export let enableRotation = false;
+let startPosition;
+
 
 // Initialize the scene
 function setupScene() {
@@ -134,6 +140,66 @@ function setupOrbitControls() {
     console.log("orbitControls set up.");
 }
 
+// Manage key events
+function onKeyDown( event ) {
+    console.log('Key pressed:', event.key); // Add this to check any key press
+
+    if (event.key === 'd') {
+        houseSelectionEnabled = true;
+        console.log('House selection enabled');
+    }
+
+    if (event.key === 'r') {
+        houseSelectionEnabled = true;
+        enableRotation = true;
+        console.log('House rotation enabled');
+    }
+}
+
+function onKeyUp(event) {
+    console.log('Key pressed:', event.key); // Add this to check any key press
+
+    if (event.key === 'd') {
+        houseSelectionEnabled = false;
+        dragControls.dispose();
+        console.log('House selection disabled and dragControls disposed');
+    }
+
+    if (event.key === 'r') {
+        houseSelectionEnabled = false;
+        enableRotation = false;
+        dragControls.dispose();
+        console.log('House rotation disabled and dragControls disposed');
+    }
+}
+
+export function onHouseSelection() {
+    // event.preventDefault();
+
+    raycaster.setFromCamera(mouse, camera);
+
+    // Check for intersections with all house objects
+    const intersections = raycaster.intersectObjects(allHouses, true); // true ensures children are considered
+    console.log("Intersections", intersections);
+
+    if (intersections.length > 0) {
+        const object = intersections[0].object; // Get the clicked object
+        console.log("House part clicked: ", object.name);
+
+        let parent = object.parent; // Get the parent (house group)
+        console.log("Parent: ", parent.name, parent);
+
+        // Check if the parent is a valid house group
+        if (parent.userData && parent.userData.type === 'house') {
+            let offsetY = (mapHeight / 2) + parent.userData.scale;
+            // Enable DragControls passing the entire house group (parent)
+            setupDragControls([parent], offsetY);
+        }
+    }
+
+    render();
+}
+
 // Function to setup DragControls
 function setupDragControls(houseToDrag, heightOffset) {
     if (dragControls) {
@@ -142,15 +208,30 @@ function setupDragControls(houseToDrag, heightOffset) {
 
     dragControls = new DragControls(houseToDrag, camera, labelRenderer.domElement);
     dragControls.transformGroup = true;
+    dragControls.rotateSpeed = 2;
 
     dragControls.addEventListener('dragstart', function (event) {
         orbitControls.enabled = false;
         console.log('Drag started on:', event.object.name);
+
+        if (enableRotation) {
+            startPosition = {z: event.object.position.z, x: event.object.position.x}
+        }
     });
 
     dragControls.addEventListener('drag', function (event) {
-        // Restrict movement to X and Z axes
-        event.object.position.y = heightOffset; // Fix Y position
+        if (enableRotation) {
+            // Rotate the house group around the Y axis (vertical axis)
+            event.object.position.y = heightOffset; // Fix Y position
+            event.object.position.x = startPosition.x; // Fix Y position
+            event.object.position.z = startPosition.z; // Fix Y position
+            event.object.rotation.y += 0.1; // Adjust sensitivity as needed
+            console.log('Rotating house group');
+        }else {
+            // Restrict movement to X and Z axes
+            event.object.position.y = heightOffset; // Fix Y position
+            console.log('Moving house group');
+        }
         render();
     });
 
@@ -161,24 +242,25 @@ function setupDragControls(houseToDrag, heightOffset) {
         // Capture the new coordinates for the moved house
         const movedHouse = event.object;
         const position = movedHouse.position;
+        const rotation = movedHouse.rotation.y; // Get the rotation around the Y-axis
         const { lat, lon } = mapCoordsToLatLon(position.x, position.z);
         const houseId = movedHouse.userData.id;
 
         // Send the updated position to the server
-        updateHouseCoordinates(houseId, lat, lon);
+        updateHouseCoordinates(houseId, lat, lon, rotation);
     });
 
-    dragControls.addEventListener('hoveron', function (event) {
-        console.log('Hovering over:', event.object.name);
-    });
-
-    dragControls.addEventListener('hoveroff', function (event) {
-        console.log('Stopped hovering over:', event.object.name);
-    });
+    // dragControls.addEventListener('hoveron', function (event) {
+    //     console.log('Hovering over:', event.object.name);
+    // });
+    //
+    // dragControls.addEventListener('hoveroff', function (event) {
+    //     console.log('Stopped hovering over:', event.object.name);
+    // });
 }
 
 // Function to send updated dragged house coordinates to the server
-async function updateHouseCoordinates(houseId, x, z) {
+async function updateHouseCoordinates(houseId, x, z, rotation) {
     try {
         const response = await fetch(`/api/house/${houseId}`, {
             method: 'POST',
@@ -189,16 +271,16 @@ async function updateHouseCoordinates(houseId, x, z) {
             body: JSON.stringify({
                 id: houseId,
                 lat: x,
-                lon: z
+                lon: z,
+                rotation: rotation
             })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to update house coordinates');
-        }
-
-        const data = await response.json();
-        console.log('Coordinates updated successfully:', data);
+        }).then(response => response.json())
+        .then(data => {
+            console.log('Coordinates updated successfully:', data);
+        })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     } catch (error) {
         console.error('Error updating coordinates:', error);
     }
@@ -233,5 +315,5 @@ function render() {
 export {
     scene, camera, renderer, orbitControls, setupScene, setupOrbitControls, raycaster, mapMesh, mapDiameter, mapHeight, mapRadius, setupMapMesh,
     setupRaycaster, addLights, contextMenu, createContextMenu, removeContextMenu, handleResize, animate, setupDragControls,
-    dragControls, render
+    dragControls, render, onKeyDown, onKeyUp
 };

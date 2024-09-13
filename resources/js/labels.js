@@ -5,7 +5,7 @@ import {formIsBeingSubmitted} from "./mouseHandlers.js";
 
 // Create a label for house data
 function createHouseLabel(houseData, addresses) {
-    const houseLabelDiv = document.createElement('houseLabelDiv');
+    const houseLabelDiv = document.createElement('div');
     houseLabelDiv.className = 'label';
     houseLabelDiv.id = `house-label${houseData.id}`;
     houseLabelDiv.style.top = '15px';
@@ -14,6 +14,7 @@ function createHouseLabel(houseData, addresses) {
     houseLabelDiv.style.borderRadius = '5px';
     houseLabelDiv.style.padding = '10px';
     houseLabelDiv.style.fontFamily = 'Arial, sans-serif';
+    houseLabelDiv.style.zIndex = 2;
 
     houseLabelDiv.innerHTML = `
        <ul class="list-unstyled"><strong>Addresses:</strong></ul>
@@ -47,7 +48,7 @@ function createHouseLabel(houseData, addresses) {
 
 // Create a label for tree data
 function createTreeLabel(treeData) {
-    const treeLabelDiv = document.createElement('treeLabelDiv');
+    const treeLabelDiv = document.createElement('div');
     treeLabelDiv.className = 'tree-label';
     treeLabelDiv.id = 'tree-label${treeData.id}';
     treeLabelDiv.style.backgroundColor = '#fff';
@@ -55,6 +56,7 @@ function createTreeLabel(treeData) {
     treeLabelDiv.style.borderRadius = '5px';
     treeLabelDiv.style.padding = '10px';
     treeLabelDiv.style.fontFamily = 'Arial, sans-serif';
+    treeLabelDiv.style.zIndex = 2;
 
     treeLabelDiv.innerHTML = `
         <p><strong>Tree ID:</strong> ${treeData.id}</p>
@@ -84,6 +86,11 @@ function createTreeLabel(treeData) {
             event.preventDefault();
             // console.log("Opening tree edit modal...");
             event.stopPropagation(); // Prevent the event from propagating further
+
+            // Hide the tree label when the modal opens
+            treeLabelDiv.style.display = 'none';
+
+            // Open the modal
             populateTreeEditModal(treeData);  // Populate modal fields for tree editing
         });
     }
@@ -101,24 +108,24 @@ function createTreeLabel(treeData) {
 
 function createCoordsLabel(lat, lon) {
     // Display the coordinates
-    const div = document.createElement('div');
-    div.className = 'coords-card';
-    div.style.position = 'absolute';
-    div.style.width = '10rem';
-    div.style.border = '1px solid #ccc';
-    div.style.borderRadius = '5px';
-    div.style.padding = '10px';
-    div.style.backgroundColor = '#fff';
-    div.style.fontFamily = 'Arial, sans-serif';
-    div.style.zIndex = 1000;
-    div.style.display = 'block';
+    const coordsDiv = document.createElement('div');
+    coordsDiv.className = 'coords-card';
+    coordsDiv.style.position = 'absolute';
+    coordsDiv.style.width = '10rem';
+    coordsDiv.style.border = '1px solid #ccc';
+    coordsDiv.style.borderRadius = '5px';
+    coordsDiv.style.padding = '10px';
+    coordsDiv.style.backgroundColor = '#fff';
+    coordsDiv.style.fontFamily = 'Arial, sans-serif';
+    coordsDiv.style.zIndex = 2;
+    coordsDiv.style.display = 'block';
 
-    div.innerHTML = `
+    coordsDiv.innerHTML = `
                 <p><strong>Latitude:</strong> ${lat.toFixed(6)}</p>
                 <p><strong>Longitude:</strong> ${lon.toFixed(6)}</p>
             `;
 
-    return new CSS2DObject(div);
+    return new CSS2DObject(coordsDiv);
 }
 
 export { createHouseLabel, createTreeLabel, createCoordsLabel };

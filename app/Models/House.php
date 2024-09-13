@@ -19,6 +19,7 @@ class House extends Model
         'roof_colour',
         'lat',
         'lon',
+        'rotation'
     ];
 
     public function addresses()

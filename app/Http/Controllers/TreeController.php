@@ -22,6 +22,8 @@ class TreeController extends Controller
             'lat' => $validated['lat'],
             'lon' => $validated['lon'],
             'scale' => $validated['scale'],
+            'leaf_colour' => '#00FF00',
+            'trunk_colour' => '#8B4513',
         ]);
 
         return back()->with('success', 'Tree added successfully.');

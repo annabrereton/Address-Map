@@ -19,6 +19,7 @@ class HouseController extends Controller
             'roof_colour' => 'required|string',
             'lat' => 'required|numeric',
             'lon' => 'required|numeric',
+            'rotation' => 'nullable|numeric'
         ]);
 
         $house = House::create($request->all());
@@ -37,6 +38,7 @@ class HouseController extends Controller
             'roof_colour' => 'required|string',
             'lat' => 'required|numeric',
             'lon' => 'required|numeric',
+//            'rotation' => 'required|numeric',
         ]);
 
         // Update the address in the database
@@ -49,6 +51,7 @@ class HouseController extends Controller
         $house->roof_colour = $request->input('roof_colour');
         $house->lat = $request->input('lat');
         $house->lon = $request->input('lon');
+//        $house->rotation = $request->input('rotation');
         $house->save();
 
         return redirect()->back()->with('success', 'House updated successfully.');
@@ -59,11 +62,13 @@ class HouseController extends Controller
         $request->validate([
             'lat' => 'required|numeric',
             'lon' => 'required|numeric',
+            'rotation' => 'required|numeric',
         ]);
 
         $house = House::findOrFail($id);
         $house->lat = $request->input('lat');
         $house->lon = $request->input('lon');
+        $house->rotation = $request->input('rotation');
         $house->save();
 
         return response()->json([

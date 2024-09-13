@@ -82,10 +82,10 @@ function loadTreeModel() {
         const treeGroup = new THREE.Group();
         treeGroup.add(trunkMesh);
         treeGroup.add(leavesMesh);
+        treeGroup.userData.type = 'tree';
         scene.add(treeGroup);
         // console.log("TreeGroup: ", treeGroup);
         allTrees.push(treeGroup);
-        // allObjects.push(treeGroup); // Add each house to the draggable objects array
 
         trunkMesh.instanceMatrix.needsUpdate = true;
         leavesMesh.instanceMatrix.needsUpdate = true;

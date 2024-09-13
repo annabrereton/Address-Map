@@ -162,6 +162,7 @@ function createRectangularWindow(materials, position, rotationY = 0) {
 
 // Function to render houses on the map
 function renderHouses() {
+    console.log(window.houses);
     window.houses.forEach(houseData => {
         const mapCoords = latLonToMapCoords(houseData.lat, houseData.lon);
         const scale = houseData.scale || 3;
@@ -176,8 +177,12 @@ function renderHouses() {
             scale: scale
         });
 
+        // Position house according to saved coordinates and rotation
         heightOffset = (mapHeight / 2) + scale;
         house.position.set(mapCoords.x, heightOffset, mapCoords.y);
+        console.log("House rotation: ", houseData.rotation);
+        // house.rotation.y = houseData.rotation;
+        house.rotateY(houseData.rotation);
 
         house.name = "house" + houseData.id;
         house.userData = { ...houseData };

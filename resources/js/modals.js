@@ -4,6 +4,7 @@ import {fetchHouses, renderHouses, allHouses} from "./houses.js";
 import {scene} from "./map.js";
 import {currentLabel} from "./mouseHandlers.js";
 
+
 function populateHouseEditModal(houseData, addresses) {
     console.log("Populating modal...", houseData);
 
@@ -64,6 +65,8 @@ function populateHouseEditModal(houseData, addresses) {
             addressesContainer.insertAdjacentHTML('beforeend', addressForm);
         });
 
+
+
         // Add event listener for dynamically created delete buttons
         addressesContainer.addEventListener('click', function(event) {
             if (event.target && event.target.classList.contains('delete-address-btn')) {
@@ -74,7 +77,7 @@ function populateHouseEditModal(houseData, addresses) {
         });
 
         currentLabel.visible = false;
-        currentLabel = null;  // Clear the reference
+        currentLabel.length = 0;  // Clear the reference
     }
 }
 
@@ -162,15 +165,17 @@ async function updateMapAfterDeletion() {
 
 // Function to populate the tree edit modal with tree data
 function populateTreeEditModal(treeData) {
-    console.log("Populating tree modal...");
+    console.log("Populating tree modal...", treeData.data);
     document.getElementById('treeToEditId').textContent = treeData.id;
     document.getElementById('treeLatitude').value = treeData.data.lat;
     document.getElementById('treeLongitude').value = treeData.data.lon;
     document.getElementById('treeScale').value = String(treeData.data.scale);
+    document.getElementById('leafColour').value = treeData.data.leaf_colour;
+    document.getElementById('trunkColour').value = treeData.data.trunk_colour;
     document.getElementById('editTreeForm').action = `/tree/${treeData.id}`;
 
     currentLabel.visible = false;
-    currentLabel = null;  // Clear the reference
+    currentLabel.length = 0;  // Clear the reference
 }
 
 export { populateHouseEditModal, deleteAddress, populateTreeEditModal };

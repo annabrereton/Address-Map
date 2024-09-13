@@ -101,8 +101,10 @@
 
                     <!-- Addresses Tab -->
                     <div class="tab-pane fade" id="edit-addresses" role="tabpanel" aria-labelledby="edit-addresses-tab">
-                        <h5 class="mt-3">New Address</h5>
-                        <button class="btn btn-secondary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#addNewAddressForm" aria-expanded="false" aria-controls="addNewAddressForm">Add</button>
+                        <div class="d-flex align-items-center">
+                            <h5 class="mt-3 mb-0 me-3">New Address</h5>
+                            <button class="btn btn-secondary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#addNewAddressForm" aria-expanded="false" aria-controls="addNewAddressForm">Add</button>
+                        </div>
                         <div class="collapse mt-3" id="addNewAddressForm">
                             <form id="newAddressForm" method="POST" action="{{ route('address.store') }}">
                                 @csrf
@@ -115,7 +117,9 @@
                                     <span class="input-group-text" id="basic-addon1">Street</span>
                                     <input type="text" class="form-control" id="newAddressStreet" name="street" required>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Add Address</button>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">Add Address</button>
+                                </div>
                             </form>
                         </div>
 {{--                        <hr>--}}

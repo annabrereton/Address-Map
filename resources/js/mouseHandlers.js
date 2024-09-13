@@ -8,7 +8,7 @@ import {
     camera,
     mapMesh,
     createContextMenu,
-    render, setupDragControls, mapHeight
+    render, setupDragControls, mapHeight, onHouseSelection, houseSelectionEnabled
 } from './map.js';
 import { trunkMesh, leavesMesh, treeInstanceData } from './trees.js';
 import { mapCoordsToLatLon } from './utils.js';
@@ -16,11 +16,11 @@ import { allHouses } from './houses.js';
 import { populateHouseEditModal, deleteAddress, populateTreeEditModal } from './modals.js';
 
 
+const alerts = window.alerts;
+const alertsWrapper = window.alertsWrapper;
+
 let intersectionPoint;
 const mouse = new THREE.Vector2();
-
-// Get the cardContainer element
-const cardContainer = document.getElementById('cardContainer');
 
 // Variable to check if a house or tree was clicked
 let clicked = false;
@@ -36,51 +36,27 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-let enableSelection = false;
-
-
-function onPointerDown( event ) {
-
-    enableSelection = true;
-
-}
-
-function onPointerUp() {
-
-    enableSelection = false;
-
-}
-
-function onHouseClick(event) {
-    event.preventDefault();
-
-    raycaster.setFromCamera(mouse, camera);
-
-    // Check for intersections with all house objects
-    const intersections = raycaster.intersectObjects(allHouses, true); // true ensures children are considered
-    console.log("Intersections", intersections);
-
-    if (intersections.length > 0) {
-        const object = intersections[0].object; // Get the clicked object
-        console.log("House part clicked: ", object.name);
-
-        let parent = object.parent; // Get the parent (house group)
-        console.log("Parent: ", parent.name, parent);
-
-        // Check if the parent is a valid house group
-        if (parent.userData && parent.userData.type === 'house') {
-            let offsetY = (mapHeight / 2) + parent.userData.scale;
-            // Enable DragControls passing the entire house group (parent)
-            setupDragControls([parent], offsetY);
-        }
-    }
-
-    render();
-}
-
+// Main click handler, handling context menus and scene interaction
 function onMouseClick(event) {
     if (event.button !== 0) return; // Ignore if it's not a left-click
 
+    // If a modal is open, skip further interaction
+    const modalIsOpen = document.querySelector('.modal.show');
+    if (modalIsOpen) {
+        return;
+    }
+
+    if (alerts) {
+        alertsWrapper.style.display = 'none'; // Remove alert elements
+    }
+
+    // If house selection is enabled and the 'd' key was pressed, handle house selection
+    if (houseSelectionEnabled) {
+        onHouseSelection();
+        return;
+    }
+
+    // Handle labels
     if (currentLabel) {
         currentLabel.visible = false;
         currentLabel = null;
@@ -97,7 +73,7 @@ function onMouseDoubleClick(event) {
 
     if (currentLabel) {
         currentLabel.visible = false;
-        currentLabel = null;
+        currentLabel.length = 0;
     }
 
     // Remove context menu if clicked outside
@@ -174,6 +150,7 @@ function onMouseDoubleClick(event) {
         if (clickedObject === trunkMesh || clickedObject === leavesMesh) {
             const instanceIndex = intersection.instanceId;
             const treeData = treeInstanceData[instanceIndex];
+            console.log("Tree Data: ", treeData);
 
             // Create the tree label
             let treeLabel = createTreeLabel(treeData);
@@ -209,5 +186,5 @@ function onContextMenu(event) {
 
 export {
     mouse, currentLabel, onMouseMove, formIsBeingSubmitted, onContextMenu, onMouseClick, onMouseDoubleClick,
-    populateTreeEditModal, populateHouseEditModal, deleteAddress, onHouseClick, onPointerDown, onPointerUp
+    populateTreeEditModal, populateHouseEditModal, deleteAddress
 }

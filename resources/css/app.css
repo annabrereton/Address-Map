@@ -5,6 +5,9 @@ body {
 
 canvas {
     display: block;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
 }
 
 #createHouse {
@@ -75,5 +78,29 @@ canvas {
     max-width: none;             /* Remove any automatic width constraints */
     display: flex;
     align-items: center;
+    z-index: 2001;
+}
+
+#alerts-wrapper {
+    position: absolute; /* Use fixed to keep alerts in view as the page scrolls */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999; /* Ensure it's above other content but below modals */
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+.alert {
+    width: 100%;
+    z-index: 999;
+    margin-bottom: 10px; /* Spacing between alerts */
+}
+
+.modal {
+    z-index: 1001; /* Make sure this is higher than the canvas */
+}
+
+.modal-backdrop {
+    z-index: 1000;
 }
 
