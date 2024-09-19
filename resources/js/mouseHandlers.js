@@ -39,7 +39,7 @@ function onMouseMove(event) {
 // Main click handler, handling context menus and scene interaction
 function onMouseClick(event) {
     if (event.button !== 0) return; // Ignore if it's not a left-click
-
+    console.log("Mouse clicked");
     // If a modal is open, skip further interaction
     const modalIsOpen = document.querySelector('.modal.show');
     if (modalIsOpen) {
@@ -70,7 +70,7 @@ function onMouseClick(event) {
 
 function onMouseDoubleClick(event) {
     if (event.button !== 0) return; // Ignore if it's not a left-click
-
+    console.log("Mouse double clicked");
     if (currentLabel) {
         currentLabel.visible = false;
         currentLabel.length = 0;

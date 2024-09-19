@@ -11,7 +11,8 @@ import {
     setupRaycaster,
     animate,
     handleResize,
-    // createTestCube
+    initializeMoveKeyHandlers,
+    keyEventManager,
 } from './map.js';
 import { fetchTrees, loadTreeModel } from './trees.js';
 import { fetchHouses, renderHouses } from './houses.js';
@@ -42,11 +43,9 @@ async function init() {
 
     setupRaycaster();
     setupOrbitControls();
-    // Now that both houses and trees are loaded, setup drag controls
-    // setupDragControls();
-
-    // createTestCube();
     setupEventListeners();
+    initializeMoveKeyHandlers();
+    keyEventManager.setupListeners();
 
 
     animate();

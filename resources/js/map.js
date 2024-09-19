@@ -10,6 +10,7 @@ import { CSS2DRenderer} from 'three/addons/renderers/CSS2DRenderer.js';
 import { mapCoordsToLatLon } from './utils.js';
 import {allHouses} from "./houses.js";
 import {mouse} from "./mouseHandlers.js";
+import { keyEventManager } from './KeyEventManager.js';
 
 // Global variables
 let scene, camera, renderer, orbitControls;
@@ -23,6 +24,7 @@ const mapRadius = mapDiameter / 2;
 const raycaster = new THREE.Raycaster();
 let contextMenu;
 
+keyEventManager.setupListeners();
 export let houseSelectionEnabled = false;
 export let enableRotation = false;
 let startPosition;
@@ -141,36 +143,39 @@ function setupOrbitControls() {
 }
 
 // Manage key events
-function onKeyDown( event ) {
-    console.log('Key pressed:', event.key); // Add this to check any key press
+function initializeMoveKeyHandlers() {
+    keyEventManager.addKeyDownHandler((event) => {
+        if (event.key === 'd') {
+            houseSelectionEnabled = true;
+            console.log('House selected, dragging enabled');
+        }
+        if (event.key === 'r') {
+            houseSelectionEnabled = true;
+            enableRotation = true;
+            console.log('House selected, rotation enabled');
+        }
+    });
 
-    if (event.key === 'd') {
-        houseSelectionEnabled = true;
-        console.log('House selection enabled');
-    }
-
-    if (event.key === 'r') {
-        houseSelectionEnabled = true;
-        enableRotation = true;
-        console.log('House rotation enabled');
-    }
-}
-
-function onKeyUp(event) {
-    console.log('Key pressed:', event.key); // Add this to check any key press
-
-    if (event.key === 'd') {
-        houseSelectionEnabled = false;
-        dragControls.dispose();
-        console.log('House selection disabled and dragControls disposed');
-    }
-
-    if (event.key === 'r') {
-        houseSelectionEnabled = false;
-        enableRotation = false;
-        dragControls.dispose();
-        console.log('House rotation disabled and dragControls disposed');
-    }
+    keyEventManager.addKeyUpHandler((event) => {
+        if (event.key === 'd') {
+            houseSelectionEnabled = false;
+            if (dragControls) {
+                dragControls.dispose();
+            }
+            if (orbitControls) {
+                orbitControls.enabled = true;
+            }
+            console.log('House selection disabled and dragControls disposed');
+        }
+        if (event.key === 'r') {
+            houseSelectionEnabled = false;
+            enableRotation = false;
+            if (dragControls) {
+                dragControls.dispose();
+            }
+            console.log('House rotation disabled and dragControls disposed');
+        }
+    });
 }
 
 export function onHouseSelection() {
@@ -249,14 +254,6 @@ function setupDragControls(houseToDrag, heightOffset) {
         // Send the updated position to the server
         updateHouseCoordinates(houseId, lat, lon, rotation);
     });
-
-    // dragControls.addEventListener('hoveron', function (event) {
-    //     console.log('Hovering over:', event.object.name);
-    // });
-    //
-    // dragControls.addEventListener('hoveroff', function (event) {
-    //     console.log('Stopped hovering over:', event.object.name);
-    // });
 }
 
 // Function to send updated dragged house coordinates to the server
@@ -315,5 +312,5 @@ function render() {
 export {
     scene, camera, renderer, orbitControls, setupScene, setupOrbitControls, raycaster, mapMesh, mapDiameter, mapHeight, mapRadius, setupMapMesh,
     setupRaycaster, addLights, contextMenu, createContextMenu, removeContextMenu, handleResize, animate, setupDragControls,
-    dragControls, render, onKeyDown, onKeyUp
+    dragControls, render, initializeMoveKeyHandlers, keyEventManager
 };
