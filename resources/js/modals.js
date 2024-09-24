@@ -75,9 +75,6 @@ function populateHouseEditModal(houseData, addresses) {
                 deleteAddress(addressId);
             }
         });
-
-        currentLabel.visible = false;
-        currentLabel.length = 0;  // Clear the reference
     }
 }
 
@@ -174,8 +171,6 @@ function populateTreeEditModal(treeData) {
     document.getElementById('trunkColour').value = treeData.data.trunk_colour;
     document.getElementById('editTreeForm').action = `/tree/${treeData.id}`;
 
-    currentLabel.visible = false;
-    currentLabel.length = 0;  // Clear the reference
 }
 
 export { populateHouseEditModal, deleteAddress, populateTreeEditModal };

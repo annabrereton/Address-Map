@@ -7,27 +7,29 @@ import * as THREE from 'three';
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import { CSS2DRenderer} from 'three/addons/renderers/CSS2DRenderer.js';
+import { SCENESTATE } from './SceneState.js';
 import { mapCoordsToLatLon } from './utils.js';
 import {allHouses} from "./houses.js";
-import {mouse} from "./mouseHandlers.js";
-import { keyEventManager } from './KeyEventManager.js';
+import { allTrees } from './trees.js';
+import { updateHouseCoordinates } from './api.js';
 
 // Global variables
-let scene, camera, renderer, orbitControls;
+export let scene, camera, renderer, orbitControls, mapMesh, mapDiameter, mapHeight, mapRadius;
+export let contextMenu = null;
+export const sceneState = new SCENESTATE();
 let dragControls;
-let mapMesh;
 
-const mapDiameter = 300;        // Diameter in meters
-const mapHeight = 10;           // Height of the cylinder
-const mapRadius = mapDiameter / 2;
 
-const raycaster = new THREE.Raycaster();
-let contextMenu;
+mapDiameter = 300;        // Diameter in meters
+mapHeight = 10;           // Height of the cylinder
+mapRadius = mapDiameter / 2;
 
-keyEventManager.setupListeners();
-export let houseSelectionEnabled = false;
+// Create raycaster as a global variable
+export const raycaster = new THREE.Raycaster();
+// export let houseSelectionEnabled = false;
 export let enableRotation = false;
 let startPosition;
+export let intersectionPoint = new THREE.Vector3();
 
 
 // Initialize the scene
@@ -142,100 +144,29 @@ function setupOrbitControls() {
     console.log("orbitControls set up.");
 }
 
-// Manage key events
-function initializeMoveKeyHandlers() {
-    keyEventManager.addKeyDownHandler((event) => {
-        if (event.key === 'd') {
-            houseSelectionEnabled = true;
-            console.log('House selected, dragging enabled');
-        }
-        if (event.key === 'r') {
-            houseSelectionEnabled = true;
-            enableRotation = true;
-            console.log('House selected, rotation enabled');
-        }
-    });
 
-    keyEventManager.addKeyUpHandler((event) => {
-        if (event.key === 'd') {
-            houseSelectionEnabled = false;
-            if (dragControls) {
-                dragControls.dispose();
-            }
-            if (orbitControls) {
-                orbitControls.enabled = true;
-            }
-            console.log('House selection disabled and dragControls disposed');
-        }
-        if (event.key === 'r') {
-            houseSelectionEnabled = false;
-            enableRotation = false;
-            if (dragControls) {
-                dragControls.dispose();
-            }
-            console.log('House rotation disabled and dragControls disposed');
-        }
-    });
-}
-
-export function onHouseSelection() {
-    // event.preventDefault();
-
-    raycaster.setFromCamera(mouse, camera);
-
-    // Check for intersections with all house objects
-    const intersections = raycaster.intersectObjects(allHouses, true); // true ensures children are considered
-    console.log("Intersections", intersections);
-
-    if (intersections.length > 0) {
-        const object = intersections[0].object; // Get the clicked object
-        console.log("House part clicked: ", object.name);
-
-        let parent = object.parent; // Get the parent (house group)
-        console.log("Parent: ", parent.name, parent);
-
-        // Check if the parent is a valid house group
-        if (parent.userData && parent.userData.type === 'house') {
-            let offsetY = (mapHeight / 2) + parent.userData.scale;
-            // Enable DragControls passing the entire house group (parent)
-            setupDragControls([parent], offsetY);
-        }
-    }
-
-    render();
-}
-
-// Function to setup DragControls
-function setupDragControls(houseToDrag, heightOffset) {
+export function setupDragControls(objectsToDrag, heightOffset, isRotating = false) {
+    console.log('Setting up drag controls', objectsToDrag, heightOffset, isRotating);
     if (dragControls) {
-        dragControls.dispose(); // Dispose of existing controls if any
+        dragControls.dispose();
     }
 
-    dragControls = new DragControls(houseToDrag, camera, labelRenderer.domElement);
+    dragControls = new DragControls(objectsToDrag, camera, labelRenderer.domElement);
     dragControls.transformGroup = true;
-    dragControls.rotateSpeed = 2;
-
     dragControls.addEventListener('dragstart', function (event) {
         orbitControls.enabled = false;
+        startPosition = { x: event.object.position.x, z: event.object.position.z };
         console.log('Drag started on:', event.object.name);
-
-        if (enableRotation) {
-            startPosition = {z: event.object.position.z, x: event.object.position.x}
-        }
     });
 
     dragControls.addEventListener('drag', function (event) {
-        if (enableRotation) {
-            // Rotate the house group around the Y axis (vertical axis)
-            event.object.position.y = heightOffset; // Fix Y position
-            event.object.position.x = startPosition.x; // Fix Y position
-            event.object.position.z = startPosition.z; // Fix Y position
-            event.object.rotation.y += 0.1; // Adjust sensitivity as needed
-            console.log('Rotating house group');
-        }else {
-            // Restrict movement to X and Z axes
-            event.object.position.y = heightOffset; // Fix Y position
-            console.log('Moving house group');
+        if (isRotating) {
+            event.object.position.y = heightOffset;
+            event.object.position.x = startPosition.x;
+            event.object.position.z = startPosition.z;
+            event.object.rotation.y += 0.1;
+        } else {
+            event.object.position.y = heightOffset;
         }
         render();
     });
@@ -243,49 +174,36 @@ function setupDragControls(houseToDrag, heightOffset) {
     dragControls.addEventListener('dragend', function (event) {
         orbitControls.enabled = true;
         console.log('Drag ended on:', event.object.name);
-
-        // Capture the new coordinates for the moved house
-        const movedHouse = event.object;
-        const position = movedHouse.position;
-        const rotation = movedHouse.rotation.y; // Get the rotation around the Y-axis
+        
+        const position = event.object.position;
+        const rotation = event.object.rotation.y;
         const { lat, lon } = mapCoordsToLatLon(position.x, position.z);
-        const houseId = movedHouse.userData.id;
+        console.log('Updating house position - Lat:', lat, 'Lon:', lon, 'Rotation:', rotation);
 
-        // Send the updated position to the server
-        updateHouseCoordinates(houseId, lat, lon, rotation);
+        updateHouseCoordinates(event.object.userData.id, lat, lon, rotation);
     });
+    
+    dragControls.enabled = true;
 }
 
-// Function to send updated dragged house coordinates to the server
-async function updateHouseCoordinates(houseId, x, z, rotation) {
-    try {
-        const response = await fetch(`/api/house/${houseId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') // Include CSRF token if using Laravel
-            },
-            body: JSON.stringify({
-                id: houseId,
-                lat: x,
-                lon: z,
-                rotation: rotation
-            })
-        }).then(response => response.json())
-        .then(data => {
-            console.log('Coordinates updated successfully:', data);
-        })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-    } catch (error) {
-        console.error('Error updating coordinates:', error);
+export function disposeDragControls() {
+    if (dragControls) {
+        dragControls.dispose();
+        dragControls = null;
+        console.log('Drag controls disposed');
     }
 }
 
-// Function to set up Raycaster
-function setupRaycaster() {
-    const raycaster = new THREE.Raycaster();
+export function checkIntersection(mouse) {
+    raycaster.setFromCamera(mouse, camera);
+    const objectsToIntersect = [mapMesh, ...allHouses, ...allTrees]; // Ensure mapMesh is included
+    const intersects = raycaster.intersectObjects(objectsToIntersect, true);
+
+    if (intersects.length > 0) {
+        const intersection = intersects[0];
+        return intersection; // Return the full intersection object
+    }
+    return null;
 }
 
 // Handle window resize
@@ -296,21 +214,21 @@ function handleResize() {
 }
 
 // Animation loop
-function animate() {
+export function animate() {
     requestAnimationFrame(animate);
-    orbitControls.update();
+    if (sceneState.orbitControlsEnabled) {
+        orbitControls.update();
+    } 
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera); // Your CSS2DRenderer
 }
 
 function render() {
-
     renderer.render( scene, camera );
-
 }
 
+
 export {
-    scene, camera, renderer, orbitControls, setupScene, setupOrbitControls, raycaster, mapMesh, mapDiameter, mapHeight, mapRadius, setupMapMesh,
-    setupRaycaster, addLights, contextMenu, createContextMenu, removeContextMenu, handleResize, animate, setupDragControls,
-    dragControls, render, initializeMoveKeyHandlers, keyEventManager
+    setupScene, setupMapMesh, setupOrbitControls, addLights, createContextMenu, removeContextMenu,
+    handleResize, render
 };

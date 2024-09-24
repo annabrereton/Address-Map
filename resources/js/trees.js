@@ -5,6 +5,7 @@ import * as THREE from "three";
 import {mapHeight, scene} from './map.js';
 import { latLonToMapCoords } from "./utils.js";
 import {convertIntegerToScale} from "./utils.js";
+import { createTreeLabel } from "./labels.js";
 
 // const trees = window.trees || [];
 
@@ -79,12 +80,14 @@ function loadTreeModel() {
         // scene.add(leavesMesh);
         // console.log(trunkMesh);
 
+        // Add each pair of leavesMesh and trunkMesh to a group
         const treeGroup = new THREE.Group();
         treeGroup.add(trunkMesh);
         treeGroup.add(leavesMesh);
         treeGroup.userData.type = 'tree';
         scene.add(treeGroup);
         // console.log("TreeGroup: ", treeGroup);
+    
         allTrees.push(treeGroup);
 
         trunkMesh.instanceMatrix.needsUpdate = true;
@@ -117,6 +120,13 @@ function loadTreeModel() {
 
             // Store the tree ID and other relevant data
             treeInstanceData[index] = { id: tree.id, data: tree };
+            
+            // // Create a tree label
+            // const treeLabel = createTreeLabel(treeInstanceData[index]);
+            // treeLabel.position.set(0, 0, treeLabel.scale.x * 7);
+            // treeLabel.name = 'treeLabel';
+            // treeLabel.visible = false;
+            // treeGroup.add(treeLabel);
         });
 
         // Ensure the instanced meshes are updated

@@ -4,24 +4,34 @@ import {populateHouseEditModal, populateTreeEditModal} from './modals.js';
 import {formIsBeingSubmitted} from "./mouseHandlers.js";
 
 // Create a label for house data
-function createHouseLabel(houseData, addresses) {
+function createHouseLabel(houseData) {
+    console.log("Creating house label", houseData);
     const houseLabelDiv = document.createElement('div');
-    houseLabelDiv.className = 'label';
+    houseLabelDiv.className = 'label house-label';
     houseLabelDiv.id = `house-label${houseData.id}`;
     houseLabelDiv.style.top = '15px';
     houseLabelDiv.style.backgroundColor = '#fff';
-    houseLabelDiv.style.border = '1px solid #ccc';
-    houseLabelDiv.style.borderRadius = '5px';
+    houseLabelDiv.style.borderBottom = '1px solid #ccc';
     houseLabelDiv.style.padding = '10px';
     houseLabelDiv.style.fontFamily = 'Arial, sans-serif';
-    houseLabelDiv.style.zIndex = 2;
+    houseLabelDiv.pointerEvents = 'auto';
+    
+
+    let addressesContent;
+    if (!houseData.addresses || houseData.addresses.length === 0) {
+        addressesContent = '<p>No addresses found for this house.</p>';
+    } else {
+        addressesContent = `
+            <ul class="list-unstyled"><strong>Addresses:</strong></ul>
+            ${houseData.addresses.map((address, index) => `
+                <li class="mx-2 decoration-none">${address.name} ${address.street}</li>
+                ${index < houseData.addresses.length - 1 ? '<hr>' : ''}
+            `).join('')}
+        `;
+    }
 
     houseLabelDiv.innerHTML = `
-       <ul class="list-unstyled"><strong>Addresses:</strong></ul>
-        ${addresses.map((address, index) => `
-            <li class="mx-2 decoration-none">${address.name} ${address.street}</li>
-            ${index < addresses.length - 1 ? '<hr>' : ''}
-        `).join('')}
+        ${addressesContent}
         <div class="d-flex justify-content-end gap-2">
             <a href="#" id="editHouse${houseData.id}" class="btn btn-sm btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#editHouseAddressModal">Edit</a>
         </div>
@@ -39,24 +49,23 @@ function createHouseLabel(houseData, addresses) {
         editHouseButton.addEventListener('click', function(event) {
             event.preventDefault();
             event.stopPropagation(); // Prevent the event from propagating further
-            populateHouseEditModal(houseData, addresses);
+            populateHouseEditModal(houseData, houseData.addresses);
         });
     }
 
-    return new CSS2DObject(houseLabelDiv);
+    return houseLabelDiv;
 }
 
 // Create a label for tree data
 function createTreeLabel(treeData) {
     const treeLabelDiv = document.createElement('div');
-    treeLabelDiv.className = 'tree-label';
+    treeLabelDiv.className = 'label tree-label';
     treeLabelDiv.id = 'tree-label${treeData.id}';
     treeLabelDiv.style.backgroundColor = '#fff';
-    treeLabelDiv.style.border = '1px solid #ccc';
-    treeLabelDiv.style.borderRadius = '5px';
+    treeLabelDiv.style.borderBottom = '1px solid #ccc';
     treeLabelDiv.style.padding = '10px';
     treeLabelDiv.style.fontFamily = 'Arial, sans-serif';
-    treeLabelDiv.style.zIndex = 2;
+    treeLabelDiv.pointerEvents = 'auto',
 
     treeLabelDiv.innerHTML = `
         <p><strong>Tree ID:</strong> ${treeData.id}</p>
@@ -77,7 +86,6 @@ function createTreeLabel(treeData) {
     // Add event listener to the label itself to stop clicks from going through to 3D objects
     treeLabelDiv.addEventListener('pointerdown', function(event) {
         event.stopPropagation(); // Prevents the click from affecting the scene behind
-        // console.log("House label clicked");
     });
 
     const editTreeButton = treeLabelDiv.querySelector(`#editTree${treeData.id}`);
@@ -103,31 +111,9 @@ function createTreeLabel(treeData) {
         });
     }
 
-    return new CSS2DObject(treeLabelDiv);
+    return treeLabelDiv;
 }
 
-function createCoordsLabel(lat, lon) {
-    // Display the coordinates
-    const coordsDiv = document.createElement('div');
-    coordsDiv.className = 'coords-card';
-    coordsDiv.style.position = 'absolute';
-    coordsDiv.style.width = '10rem';
-    coordsDiv.style.border = '1px solid #ccc';
-    coordsDiv.style.borderRadius = '5px';
-    coordsDiv.style.padding = '10px';
-    coordsDiv.style.backgroundColor = '#fff';
-    coordsDiv.style.fontFamily = 'Arial, sans-serif';
-    coordsDiv.style.zIndex = 2;
-    coordsDiv.style.display = 'block';
-
-    coordsDiv.innerHTML = `
-                <p><strong>Latitude:</strong> ${lat.toFixed(6)}</p>
-                <p><strong>Longitude:</strong> ${lon.toFixed(6)}</p>
-            `;
-
-    return new CSS2DObject(coordsDiv);
-}
-
-export { createHouseLabel, createTreeLabel, createCoordsLabel };
+export { createHouseLabel, createTreeLabel };
 
 

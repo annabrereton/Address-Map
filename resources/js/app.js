@@ -5,14 +5,11 @@ import { setupEventListeners } from './eventListeners.js';
 import {
     setupScene,
     setupOrbitControls,
-    setupDragControls,
     addLights,
     setupMapMesh,
-    setupRaycaster,
     animate,
     handleResize,
-    initializeMoveKeyHandlers,
-    keyEventManager,
+    sceneState
 } from './map.js';
 import { fetchTrees, loadTreeModel } from './trees.js';
 import { fetchHouses, renderHouses } from './houses.js';
@@ -23,6 +20,9 @@ async function init() {
     setupScene();
     setupMapMesh();
     addLights();
+    setupOrbitControls();
+
+    sceneState.initMouseMoveHandler();
 
     // Fetch houses and wait for the promise to resolve
     try {
@@ -40,12 +40,7 @@ async function init() {
         console.error('Error fetching trees:', error);
     }
 
-
-    setupRaycaster();
-    setupOrbitControls();
     setupEventListeners();
-    initializeMoveKeyHandlers();
-    keyEventManager.setupListeners();
 
 
     animate();
