@@ -64,7 +64,7 @@ class HouseController extends Controller
             'lon' => 'required|numeric',
             'rotation' => 'required|numeric',
         ]);
-
+        // dd($request->all());
         $house = House::findOrFail($id);
         $house->lat = $request->input('lat');
         $house->lon = $request->input('lon');
@@ -76,4 +76,40 @@ class HouseController extends Controller
             'house' => $house
         ]);
     }
+
+    // public function updateCoordinates(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'lat' => 'required|numeric',
+    //         'lon' => 'required|numeric',
+    //         'rotation' => 'required|numeric',
+    //     ]);
+    
+    //     $house = House::findOrFail($id);
+    //     $house->lat = $request->input('lat');
+    //     $house->lon = $request->input('lon');
+    
+    //     // Normalize the rotation
+    //     $rotation = $request->input('rotation');
+    //     $normalizedRotation = $this->normalizeRotation($rotation);
+    //     $house->rotation = $normalizedRotation;
+    
+    //     $house->save();
+    
+    //     return response()->json([
+    //         'message' => 'House coordinates updated successfully.',
+    //         'house' => $house
+    //     ]);
+    // }
+    
+    // // Helper function to normalize rotation
+    // private function normalizeRotation($rotation)
+    // {
+    //     // Normalize the rotation to be within the range of 0 to 2π
+    //     $normalized = fmod($rotation, 2 * M_PI); // fmod gives the remainder of the division
+    //     if ($normalized < 0) {
+    //         $normalized += 2 * M_PI; // Ensure it's positive
+    //     }
+    //     return $normalized;
+    // }
 }

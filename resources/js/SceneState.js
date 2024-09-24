@@ -218,6 +218,7 @@ export class SCENESTATE {
     }
     
     handleKeyUp(event) {
+        console.log("Key up", event.key, "Current State: ", this.currentState);
         if ((event.key === 'd' && this.isDragging) || (event.key === 'r' && this.isRotating)) {
             this.stopDraggingOrRotating(); // Stop dragging or rotating on key up
         }
@@ -241,7 +242,8 @@ export class SCENESTATE {
     }
 
     handleClick(event) {
-        if (this.isRotating === true || this.isDragging === true) {
+        if ((this.isRotating === true) || (this.isDragging === true)) {
+            console.log("Click ignored while dragging/rotating");
             return;
         }
         const intersection = this._checkIntersection();

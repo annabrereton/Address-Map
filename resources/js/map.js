@@ -157,6 +157,7 @@ export function setupDragControls(objectsToDrag, heightOffset, isRotating = fals
         orbitControls.enabled = false;
         startPosition = { x: event.object.position.x, z: event.object.position.z };
         console.log('Drag started on:', event.object.name);
+        console.log("Start Rotation", event.object.rotation.y);
     });
 
     dragControls.addEventListener('drag', function (event) {
@@ -164,7 +165,11 @@ export function setupDragControls(objectsToDrag, heightOffset, isRotating = fals
             event.object.position.y = heightOffset;
             event.object.position.x = startPosition.x;
             event.object.position.z = startPosition.z;
+
+            event.object.rotation.x = 0; // No rotation on X
+            event.object.rotation.z = 0; // No rotation on Z
             event.object.rotation.y += 0.1;
+            console.log("Rotating object", event.object.rotation.y);
         } else {
             event.object.position.y = heightOffset;
         }
@@ -177,8 +182,9 @@ export function setupDragControls(objectsToDrag, heightOffset, isRotating = fals
         
         const position = event.object.position;
         const rotation = event.object.rotation.y;
+        console.log("Dragend Rotation", rotation);
         const { lat, lon } = mapCoordsToLatLon(position.x, position.z);
-        console.log('Updating house position - Lat:', lat, 'Lon:', lon, 'Rotation:', rotation);
+        console.log('Calling updateHouseCoordinates - Lat:', lat, 'Lon:', lon, 'Rotation:', rotation);
 
         updateHouseCoordinates(event.object.userData.id, lat, lon, rotation);
     });
@@ -218,7 +224,8 @@ export function animate() {
     requestAnimationFrame(animate);
     if (sceneState.orbitControlsEnabled) {
         orbitControls.update();
-    } 
+    }
+ 
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera); // Your CSS2DRenderer
 }

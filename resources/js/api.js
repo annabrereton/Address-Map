@@ -1,6 +1,7 @@
 // // Function to send updated dragged house coordinates to the server
 export async function updateHouseCoordinates(houseId, x, z, rotation) {
     try {
+        console.log('Updating house coordinates:', houseId, x, z, rotation);
         const response = await fetch(`/api/house/${houseId}`, {
             method: 'POST',
             headers: {
