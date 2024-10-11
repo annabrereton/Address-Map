@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Address;
 use App\Models\House;
 use App\Models\Tree;
 

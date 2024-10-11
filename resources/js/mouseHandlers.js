@@ -7,8 +7,6 @@ import {
     checkIntersection,
     sceneState
 } from './map.js';
-import { SCENESTATE } from './SceneState.js';
-import { populateHouseEditModal, deleteAddress, populateTreeEditModal } from './modals.js';
 
 
 const alerts = window.alerts;
@@ -21,7 +19,7 @@ export let intersectionPoint = new THREE.Vector3();
 // let clicked = false;
 
 // Variable to check if form is being submitted:
-let formIsBeingSubmitted = false;
+export let formIsBeingSubmitted = false;
 
 export function onMouseMove(event) {
     sceneState.handleMouseMove(event);
@@ -51,7 +49,7 @@ export function onMouseClick(event) {
 }
 
 // Context menu event handler
-function onContextMenu(event) {
+export function onContextMenu(event) {
     event.preventDefault();
 
     const intersection = checkIntersection(sceneState.mouse);
@@ -63,13 +61,4 @@ function onContextMenu(event) {
     } else {
         removeContextMenu();
     }
-}
-
-
-export {
-    formIsBeingSubmitted, 
-    onContextMenu,
-    populateTreeEditModal, 
-    populateHouseEditModal, 
-    deleteAddress
 }

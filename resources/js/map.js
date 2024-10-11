@@ -168,7 +168,8 @@ export function setupDragControls(objectsToDrag, heightOffset, isRotating = fals
 
             event.object.rotation.x = 0; // No rotation on X
             event.object.rotation.z = 0; // No rotation on Z
-            event.object.rotation.y += 0.1;
+            event.object.rotation.y = (event.object.rotation.y + 0.1) % (2 * Math.PI); // Update rotation and normalize it to [0, 2π) (360degrees in radians)
+
             console.log("Rotating object", event.object.rotation.y);
         } else {
             event.object.position.y = heightOffset;
@@ -181,8 +182,8 @@ export function setupDragControls(objectsToDrag, heightOffset, isRotating = fals
         console.log('Drag ended on:', event.object.name);
         
         const position = event.object.position;
-        const rotation = event.object.rotation.y;
-        console.log("Dragend Rotation", rotation);
+        const rotation = event.object.rotation.y % (2 * Math.PI);
+            console.log("Dragend Rotation", rotation);
         const { lat, lon } = mapCoordsToLatLon(position.x, position.z);
         console.log('Calling updateHouseCoordinates - Lat:', lat, 'Lon:', lon, 'Rotation:', rotation);
 
