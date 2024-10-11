@@ -37,6 +37,11 @@
         <div id="labelContainer" class="label-container"></div>
         <div id="coordsBox" class="coords-box text-center"></div>
     </div>
+
+    <!-- 2D Map -->
+    <div id="map2d-container">
+    <canvas id="map2d"></canvas>
+</div>
 </div>
 
 

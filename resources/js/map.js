@@ -12,13 +12,14 @@ import { mapCoordsToLatLon } from './utils.js';
 import {allHouses} from "./houses.js";
 import { allTrees } from './trees.js';
 import { updateHouseCoordinates } from './api.js';
+import { Map2D } from './map2D.js';
 
 // Global variables
 export let scene, camera, renderer, orbitControls, mapMesh, mapDiameter, mapHeight, mapRadius;
 export let contextMenu = null;
 export const sceneState = new SCENESTATE();
 let dragControls;
-
+let map2D;
 
 mapDiameter = 300;        // Diameter in meters
 mapHeight = 10;           // Height of the cylinder
@@ -42,6 +43,7 @@ function setupScene() {
     document.body.appendChild(renderer.domElement);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    map2D = new Map2D('map2d', mapDiameter, THREE);
 
     // Set up camera position
     camera.position.set(10, 20, 200);  // x, y, z
@@ -218,17 +220,31 @@ function handleResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Update 2D map dimensions
+    map2D.updateDimensions();
 }
 
 // Animation loop
 export function animate() {
     requestAnimationFrame(animate);
-    if (sceneState.orbitControlsEnabled) {
+    if (orbitControls && orbitControls.enabled) {
         orbitControls.update();
     }
  
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera); // Your CSS2DRenderer
+
+    // Get camera's rotation around the y-axis
+    const cameraRotation = Math.atan2(
+        -camera.matrix.elements[8],
+        camera.matrix.elements[10]
+    );
+
+    // Update 2D map
+    const objectsToMap = [mapMesh, ...allHouses, ...allTrees];
+    map2D.update(objectsToMap, cameraRotation + Math.PI * 1.5);
 }
 
 function render() {
